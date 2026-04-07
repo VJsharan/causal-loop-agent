@@ -1,80 +1,265 @@
-# CausalLoop 🕵️‍♂️
+<div align="center">
 
-> "The AI assistant that figures out why things broke yesterday, what might break tomorrow, and how to stop your team from making the same mistake twice."
+# 🕵️‍♂️ CausalLoop
 
-**CausalLoop** is an AI agent built with the [Lyzr ADK](https://docs.lyzr.ai/lyzr-adk/overview) and powered by **Google Gemini 2.5 Pro**. It follows the [GitAgent](https://gitagent.sh) open standard — meaning its identity, skills, and rules all live as version-controlled files in this git repo.
+### The AI That Refuses to Blame Humans
 
-Instead of just pointing out that something is broken, CausalLoop digs deep to find the real, hidden reason behind why the mistake happened in the first place. It won't accept "human error" or "we were rushing" as an excuse. It looks for missing safeguards that allowed the mistake to happen.
+[![Lyzr ADK](https://img.shields.io/badge/Lyzr_ADK-v0.1.8-4F46E5?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48L3N2Zz4=)](https://docs.lyzr.ai/lyzr-adk/overview)
+[![Gemini 2.5 Pro](https://img.shields.io/badge/Gemini_2.5_Pro-Google-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
+[![GitAgent](https://img.shields.io/badge/GitAgent-Standard-F97316?style=for-the-badge&logo=git&logoColor=white)](https://gitagent.sh)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)](LICENSE)
 
-## What Can CausalLoop Do?
+---
 
-CausalLoop looks at your project across three timelines: **The Past**, **The Present**, and **The Future**.
+**CausalLoop** is an AI forensic agent that investigates code failures the way the NTSB investigates plane crashes.
 
-### 1. Checking the Past (`repo-autopsy`)
-CausalLoop scans your codebase for security flaws, hardcoded passwords, dangerous functions like `eval()`, and technical debt. It writes a forensic report (`autopsy-report.md`) citing exact file paths, line numbers, and severity ratings.
+It doesn't care who wrote the bug. It cares about **why the system allowed the bug to exist.**
 
-### 2. Investigating the Present (`mortem-interrogator`)
-When an incident happens and your team writes notes about it (`incident.md`), CausalLoop reads those notes and keeps asking "Why?" until it finds the real systemic root cause. It ignores excuses and focuses entirely on what broken process or missing rule allowed the failure to occur. Output: `systemic-finding.md`.
+> *"Human error is not a root cause. It is a consequence of insufficient guardrails."*
+> — CausalLoop, every single time.
 
-### 3. Protecting the Future (`merge-risk`)
-Before your team adds new changes, CausalLoop compares the diff against past mistakes and warns you if you're about to accidentally break things again. Output: `merge-risk.md`.
+</div>
 
-## Tech Stack
+---
 
-| Layer | Technology |
-|-------|-----------|
-| **Agent Framework** | [Lyzr ADK](https://docs.lyzr.ai/lyzr-adk/overview) |
-| **LLM Provider** | Google Gemini 2.5 Pro |
-| **Agent Standard** | [GitAgent](https://gitagent.sh) (git-native agent definition) |
-| **Runtime** | [GitClaw](https://github.com/open-gitagent/gitclaw) (optional CLI) |
+## 🧠 What Does CausalLoop Actually Do?
 
-## Quick Start
+Most tools say *"you have a bug on line 7."*
 
-### 1. Install dependencies
+CausalLoop says *"the bug on line 7 exists because your CI pipeline has zero static analysis, your team has no enforced code review policy, and your deadline pressure systematically incentivizes shipping unsafe code."*
+
+It works across **three timelines**:
+
+| Phase | Skill | What It Does | Output |
+|-------|-------|-------------|--------|
+| 🔬 **The Past** | `repo-autopsy` | Scans your codebase for security flaws, hardcoded secrets, and tech debt | `autopsy-report.md` |
+| 🔎 **The Present** | `mortem-interrogator` | Reads incident reports and performs a Five Whys analysis to find the *real* root cause | `systemic-finding.md` |
+| 🔮 **The Future** | `merge-risk` | Compares incoming code changes against past findings to warn before you repeat mistakes | `merge-risk.md` |
+
+---
+
+## ⚡ How It Works
+
+```
+                    ┌─────────────────────┐
+                    │     Your Codebase    │
+                    │  (dummy_repo/*.py)   │
+                    └────────┬────────────┘
+                             │
+                             ▼
+              ┌──────────────────────────────┐
+              │      🔬 repo-autopsy         │
+              │  grep scan → read files →    │
+              │  cite lines → assign blame   │
+              └──────────────┬───────────────┘
+                             │
+                             ▼
+                    ┌────────────────┐
+                    │ autopsy-report │
+                    │     .md        │
+                    └────────┬───────┘
+                             │
+           ┌─────────────────┼─────────────────┐
+           │                                    │
+           ▼                                    ▼
+┌─────────────────────┐            ┌──────────────────────┐
+│ 🔎 mortem-           │            │ 🔮 merge-risk        │
+│    interrogator      │            │    (future PRs)      │
+│                      │            │                      │
+│ incident.md →        │            │ diff.txt →           │
+│ Five Whys →          │            │ cross-reference →    │
+│ reject excuses →     │            │ predict failures →   │
+│ systemic verdict     │            │ block repeats        │
+└──────────┬──────────┘            └──────────┬───────────┘
+           │                                    │
+           ▼                                    ▼
+  ┌──────────────────┐              ┌──────────────────┐
+  │ systemic-finding │              │   merge-risk     │
+  │      .md         │              │      .md         │
+  └──────────────────┘              └──────────────────┘
+```
+
+All three skills are powered by **Lyzr ADK** + **Google Gemini 2.5 Pro**, with local Python tools that give the agent real filesystem access to read code sets, run scans, and write reports live.
+
+---
+
+## 🛠️ Tech Stack
+
+<div align="center">
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| 🤖 **Agent Framework** | [Lyzr ADK](https://docs.lyzr.ai/lyzr-adk/overview) | Native agent creation, memory, tools, and RAI guardrails |
+| 🧠 **LLM** | [Gemini 2.5 Pro](https://aistudio.google.com) | Google's most capable model — free tier available |
+| 📐 **Agent Standard** | [GitAgent](https://gitagent.sh) | Git-native agent definition — version-controlled identity |
+| 🐍 **Runtime** | Python 3.10+ | Local tool execution for file I/O and security scanning |
+
+</div>
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.10 or higher
+- A free [Lyzr API key](https://studio.lyzr.ai) (Community plan — no credit card)
+- A free [Gemini API key](https://aistudio.google.com)
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/VJsharan/causal-loop-agent.git
+cd causal-loop-agent
+```
+
+### 2. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Set up your API keys
-Edit the `.env` file and add your keys:
-```
+### 3. Add your API keys
+
+Open the `.env` file and replace the placeholders:
+
+```env
 LYZR_API_KEY=your_lyzr_api_key_here
 GOOGLE_API_KEY=your_gemini_api_key_here
 ```
-- **Lyzr key**: Sign up free at [Lyzr Studio](https://studio.lyzr.ai) → Account & API Key
-- **Gemini key**: Get one free at [Google AI Studio](https://aistudio.google.com)
 
-### 3. Run the demo
+### 4. Run the agent
+
 ```bash
 python run_lyzr.py
 ```
 
-This runs all three CausalLoop skills in sequence:
-1. Scans `dummy_repo/auth.py` for vulnerabilities → generates `autopsy-report.md`
-2. Reads `incident.md` and performs a Five Whys analysis → generates `systemic-finding.md`
-3. (If `diff.txt` exists) Evaluates merge risk → generates `merge-risk.md`
+That's it. CausalLoop will spin up, scan the dummy repo, interrogate the incident report, and write its findings to disk — all in under 60 seconds. ⚡
 
-## Core Rules
+---
 
-- **Find the Real Problem:** Fixing just the symptom isn't enough; finding the root cause is required.
-- **Failures aren't Flukes:** If something breaks, it's usually a repeating pattern, not just an accident.
-- **Show Proof:** Every claim the AI makes must be backed up with exact proof from the code.
-- **No Sugar-Coating:** If the team makes the exact same mistake twice, the rules need to change.
+## 🎯 Sample Output
 
-## Project Structure
+When you run the agent against the included `dummy_repo/auth.py`:
+
 ```
-causal-loop/
-├── agent.yaml          # GitAgent manifest (model, skills, tags)
-├── SOUL.md             # Agent identity & personality
-├── RULES.md            # Behavioral constraints
-├── run_lyzr.py         # Main entry point (Lyzr ADK + Gemini)
-├── .env                # API keys (not committed)
-├── requirements.txt    # Python dependencies
-├── dummy_repo/
-│   └── auth.py         # Intentionally flawed code for demo
-├── incident.md         # Sample incident report for demo
-└── skills/
-    ├── repo-autopsy/SKILL.md
-    ├── mortem-interrogator/SKILL.md
-    └── merge-risk/SKILL.md
+============================================================
+  CausalLoop — Forensic Systems Analyst
+  Powered by Lyzr ADK + Gemini 2.5 Pro
+============================================================
+
+🔬 PHASE 1: Scanning the Past (repo-autopsy)
+--------------------------------------------------
+[CRITICAL] dummy_repo/auth.py:3 → Hardcoded admin credentials
+[CRITICAL] dummy_repo/auth.py:7 → eval() with unsanitized user input
+...
+
+🔎 PHASE 2: Investigating the Present (mortem-interrogator)
+--------------------------------------------------
+REJECTED: "developer was rushing" is not a root cause.
+VERDICT: Absence of automated SAST in CI/CD pipeline...
+
+🔮 PHASE 3: Protecting the Future (merge-risk)
+--------------------------------------------------
+ℹ️  No diff.txt found — stubbed for demo.
+
+============================================================
+  ✅ Demo Complete — All CausalLoop skills executed.
+============================================================
 ```
+
+---
+
+## 🧬 Agent Identity
+
+CausalLoop's personality is defined by two files that live in git:
+
+### `SOUL.md` — Who it is
+
+> A cross-temporal forensic analyst with the cynicism of someone who has watched the exact same class of failure recur across ten different organizations. It thinks in causal chains, not snapshots.
+
+### `RULES.md` — What it must always do
+
+| ✅ Must Always | ❌ Must Never |
+|---------------|--------------|
+| Trace every finding to a causal origin | Accept the proximate cause as the root cause |
+| Cite exact file paths, line numbers, or timeline entries | Generate findings without step-by-step explanations |
+| Distinguish past failures, present risks, and future predictions | Attribute failure to "human error" |
+| Issue systemic recommendations to prevent recurrence | Close an investigation without a fix recommendation |
+
+---
+
+## 📂 Project Structure
+
+```
+causal-loop-agent/
+│
+├── 🤖 agent.yaml              # GitAgent manifest — model, skills, metadata
+├── 🧠 SOUL.md                 # Agent persona & personality definition
+├── 📏 RULES.md                # Behavioral constraints & investigation rules
+│
+├── 🐍 run_lyzr.py             # Main entry — Lyzr ADK + Gemini execution
+├── 📦 requirements.txt        # Python dependencies (lyzr-adk, python-dotenv)
+├── 🔑 .env                    # API keys (never committed)
+│
+├── 📁 dummy_repo/
+│   └── auth.py                # Intentionally flawed code for demo scanning
+│
+├── 📄 incident.md             # Sample incident report for Five Whys analysis
+│
+├── 📁 skills/
+│   ├── repo-autopsy/
+│   │   └── SKILL.md           # Instructions for codebase forensic scan
+│   ├── mortem-interrogator/
+│   │   └── SKILL.md           # Instructions for incident root cause analysis
+│   └── merge-risk/
+│       └── SKILL.md           # Instructions for pre-merge risk assessment
+│
+└── 📊 Generated Reports (after running)
+    ├── autopsy-report.md      # Forensic findings from code scan
+    ├── systemic-finding.md    # Root cause verdict from incident analysis
+    └── merge-risk.md          # Pre-merge risk warnings (when diff.txt exists)
+```
+
+---
+
+## 🔑 Key Features
+
+- 🔍 **Real File System Access** — The agent reads, scans, and writes files on your actual machine via Lyzr's local tool execution
+- 🧠 **Conversational Memory** — Maintains context across all three skill phases so findings build on each other
+- 🛡️ **Rejection of "Human Error"** — Hardcoded as a rule: the agent must always dig deeper than blaming people
+- 📐 **Git-Native Identity** — Agent persona, rules, and skills are all version-controlled markdown files
+- ⚡ **Zero Cost** — Runs entirely on free tiers of Lyzr (Community) and Google Gemini
+
+---
+
+## 🏗️ Built With
+
+<div align="center">
+
+| | |
+|---|---|
+| ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) | Core runtime and local tools |
+| ![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge) | Agent framework with memory, tools, and guardrails |
+| ![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white) | LLM backbone for forensic reasoning |
+| ![Git](https://img.shields.io/badge/GitAgent-F05032?style=for-the-badge&logo=git&logoColor=white) | Open standard for agent definition |
+
+</div>
+
+---
+
+## 📜 License
+
+This project is open source under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+**Built for the Lyzr × GitAgent Hackathon**
+
+*Stop blaming developers. Start fixing systems.*
+
+🔬 → 🔎 → 🔮
+
+</div>
