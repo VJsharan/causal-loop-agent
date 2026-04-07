@@ -2,7 +2,12 @@ spec_version: "0.1.0"
 name: "CausalLoop"
 version: "1.0.0"
 description: "The AI agent that closes the loop between why your system broke yesterday, what's about to break tomorrow, and why your team will make the same mistake again."
-preferred_model: "claude-sonnet-4-5-20250929"
+model:
+  preferred: "gemini-2.5-pro"
+  fallback: ["gemini-2.0-flash"]
+runtime:
+  max_turns: 50
+  timeout: 120
 skills:
   - repo-autopsy
   - mortem-interrogator
@@ -12,3 +17,4 @@ tags:
   - static-analysis
   - incident-response
   - system-architecture
+  - lyzr-adk

@@ -1,3 +1,8 @@
 node_modules/
 .env
 .DS_Store
+__pycache__/
+*.pyc
+.gitagent/
+*.txt
+*.pdf
