@@ -1,0 +1,69 @@
+{
+  "name": "@vjsharan/causal-loop-agent",
+  "version": "2.0.0",
+  "description": "Cross-temporal forensic AI agent. Finds why your system broke, why it will break again, and refuses to blame humans. Powered by Lyzr ADK + Gemini 2.5 Pro.",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "causalloop": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "demo": "node index.js",
+    "autopsy": "node index.js --skill repo-autopsy",
+    "secrets": "node index.js --skill secret-scanner",
+    "deps": "node index.js --skill dependency-audit",
+    "compliance": "node index.js --skill compliance-check",
+    "interrogate": "node index.js --skill mortem-interrogator",
+    "merge-risk": "node index.js --skill merge-risk",
+    "full": "node index.js --all",
+    "validate": "npx gitagent validate",
+    "info": "npx gitagent info",
+    "python": "python run_lyzr.py"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "causalloop",
+    "forensics",
+    "security",
+    "static-analysis",
+    "incident-response",
+    "root-cause",
+    "lyzr",
+    "gemini",
+    "gitagent",
+    "devtools",
+    "hackathon"
+  ],
+  "author": "VJsharan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VJsharan/causal-loop-agent.git"
+  },
+  "files": [
+    "index.js",
+    "index.mjs",
+    "run_lyzr.py",
+    "skills/",
+    "tools/",
+    "knowledge/",
+    "memory/",
+    "dummy_repo/",
+    "SOUL.md",
+    "RULES.md",
+    "agent.yaml",
+    "README.md",
+    "requirements.txt"
+  ],
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "dotenv": "^16.4.5"
+  },
+  "gitagent": {
+    "spec_version": "0.1.0",
+    "agent": "CausalLoop"
+  }
+}
