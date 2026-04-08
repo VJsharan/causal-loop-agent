@@ -1,20 +1,52 @@
 spec_version: "0.1.0"
 name: "CausalLoop"
-version: "1.0.0"
-description: "The AI agent that closes the loop between why your system broke yesterday, what's about to break tomorrow, and why your team will make the same mistake again."
+version: "2.0.0"
+description: |
+  The AI agent that closes the loop between why your system broke yesterday,
+  what is about to break tomorrow, and why your team will make the exact same
+  mistake again. Refuses to blame humans. Always.
+
 model:
   preferred: "gemini-2.5-pro"
-  fallback: ["gemini-2.0-flash"]
+  fallback:
+    - "gemini-2.0-flash"
+
 runtime:
   max_turns: 50
-  timeout: 120
+  timeout: 300
+
 skills:
-  - repo-autopsy
-  - mortem-interrogator
-  - merge-risk
+  - repo-autopsy         # Scan codebase for security anti-patterns & vulnerabilities
+  - secret-scanner       # Hunt hardcoded credentials, API keys, and tokens
+  - dependency-audit     # Audit dependency posture, unpinned versions, missing lockfiles
+  - compliance-check     # Audit project infrastructure, git hygiene, README quality
+  - mortem-interrogator  # Five Whys root cause analysis on incident reports
+  - merge-risk           # Cross-reference PR diffs against past systemic findings
+
+tools:
+  - grep-scanner         # Pattern-based security scanner
+  - file-reader          # Local filesystem reader
+
 tags:
   - forensics
   - static-analysis
   - incident-response
+  - security
+  - compliance
   - system-architecture
   - lyzr-adk
+  - gemini
+  - hackathon
+
+metadata:
+  author: VJsharan
+  license: MIT
+  repository: https://github.com/VJsharan/causal-loop-agent
+
+human_in_the_loop:
+  enabled: true
+  trigger: "CRITICAL finding in secret-scanner or CRITICAL risk score in merge-risk"
+
+compliance:
+  audit_logging: true
+  secret_masking: true

@@ -1,8 +1,50 @@
-node_modules/
-.env
-.DS_Store
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Environment — NEVER commit actual keys
+.env
+
+# Node (leftover from gitclaw experiment)
+node_modules/
+npm-debug.log*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# gitagent runtime state
 .gitagent/
-*.txt
+
+# CausalLoop generated reports (do not commit analysis output)
+autopsy-report.md
+secret-scan-report.md
+dependency-audit-report.md
+compliance-report.md
+systemic-finding.md
+merge-risk-report.md
+diff.txt
+
+# Hackathon competitor research files
+txtfiles/
 *.pdf
+
+# Keep these
+!requirements.txt
+!.env.example
+!knowledge/
+!memory/findings.json

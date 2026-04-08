@@ -1,0 +1,42 @@
+name: file-reader
+description: |
+  Reads the contents of a local file and returns it as a string.
+  Used by the agent to inspect source code, configuration files,
+  dependency manifests, and incident reports.
+input_schema:
+  properties:
+    filepath:
+      type: string
+      description: "Absolute or relative path to the file to read"
+  required:
+    - filepath
+constraints:
+  max_file_size_bytes: 1048576
+  allowed_extensions:
+    - .py
+    - .js
+    - .ts
+    - .java
+    - .go
+    - .rb
+    - .yaml
+    - .yml
+    - .json
+    - .toml
+    - .txt
+    - .md
+    - .env
+    - .cfg
+    - .ini
+  denied_paths:
+    - /etc/passwd
+    - /etc/shadow
+    - ~/.ssh
+output_schema:
+  properties:
+    content:
+      type: string
+      description: "Full text content of the file"
+    line_count:
+      type: integer
+      description: "Number of lines in the file"

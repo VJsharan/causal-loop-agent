@@ -1,0 +1,2 @@
+lyzr-adk
+python-dotenv

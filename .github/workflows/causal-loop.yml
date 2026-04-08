@@ -1,0 +1,57 @@
+name: CausalLoop Forensic Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      target_skill:
+        description: 'Skill to run (repo-autopsy, secret-scanner, dependency-audit, compliance-check, all)'
+        required: false
+        default: 'all'
+
+jobs:
+  forensic-analysis:
+    runs-on: ubuntu-latest
+    name: CausalLoop — Forensic Analysis
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate PR diff
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD > diff.txt
+          echo "Diff generated: $(wc -l < diff.txt) lines"
+
+      - name: Run CausalLoop (all skills)
+        env:
+          LYZR_API_KEY: ${{ secrets.LYZR_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          python run_lyzr.py --all --target .
+
+      - name: Upload forensic reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: causalloop-reports-${{ github.run_number }}
+          path: |
+            autopsy-report.md
+            secret-scan-report.md
+            dependency-audit-report.md
+            compliance-report.md
+            systemic-finding.md
+            merge-risk-report.md
+          retention-days: 30

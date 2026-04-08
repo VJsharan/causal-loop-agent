@@ -1,41 +1,161 @@
 """
-CausalLoop Agent — Powered by Lyzr ADK + Gemini
+CausalLoop Agent — Powered by Lyzr ADK + Gemini 2.5 Pro
 
 A cross-temporal forensic systems analyst that:
-  1. Scans the past  (repo-autopsy)     → finds vulnerabilities in code
-  2. Investigates the present (mortem-interrogator) → traces incidents to systemic root causes
-  3. Protects the future (merge-risk)   → warns if new changes repeat old mistakes
+  1. Scans the Past    (repo-autopsy)       → finds vulnerabilities in code
+  2. Unearths Secrets  (secret-scanner)     → surfaces hardcoded credentials
+  3. Audits Deps       (dependency-audit)   → finds risky dependency posture
+  4. Checks Compliance (compliance-check)   → audits missing project infrastructure
+  5. Probes the Present (mortem-interrogator) → Five Whys systemic root cause analysis
+  6. Guards the Future  (merge-risk)        → warns if new changes repeat old mistakes
+
+Usage:
+    python run_lyzr.py                          # Interactive menu (local dummy_repo/)
+    python run_lyzr.py --repo <github_url>      # Analyze any public GitHub repo
+    python run_lyzr.py --skill repo-autopsy     # Run one specific skill directly
+    python run_lyzr.py --all                    # Run all 6 skills in sequence
+
+Architecture:
+    Lyzr ADK (studio.create_agent) → Gemini 2.5 Pro → Local Python tools
+    Tools: read_file, write_file, list_directory, run_grep_scan
 """
 
 import os
 import re
+import sys
+import json
+import shutil
+import tempfile
+import argparse
 import subprocess
+from datetime import datetime
+from typing import Optional
 from dotenv import load_dotenv
 from lyzr import Studio
 
 # ──────────────────────────────────────────────────────────────────────
-#  Load environment
+#  ANSI colour helpers — rich terminal output
 # ──────────────────────────────────────────────────────────────────────
-load_dotenv()
 
-LYZR_API_KEY = os.getenv("LYZR_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+RESET  = "\033[0m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RED    = "\033[91m"
+YELLOW = "\033[93m"
+GREEN  = "\033[92m"
+CYAN   = "\033[96m"
+BLUE   = "\033[94m"
+MAGENTA = "\033[95m"
+WHITE  = "\033[97m"
 
-if not LYZR_API_KEY or LYZR_API_KEY.startswith("your_"):
-    raise SystemExit("❌  Set LYZR_API_KEY in .env  (get one free at https://studio.lyzr.ai)")
-if not GOOGLE_API_KEY or GOOGLE_API_KEY.startswith("your_"):
-    raise SystemExit("❌  Set GOOGLE_API_KEY in .env  (get one free at https://aistudio.google.com)")
+def c(text: str, *codes: str) -> str:
+    """Wrap text in ANSI escape codes."""
+    return "".join(codes) + text + RESET
+
+def box(title: str, lines: list[str], width: int = 62) -> str:
+    """Render a box with a title and content lines."""
+    inner = width - 2
+    top    = f"┌{'─' * inner}┐"
+    bottom = f"└{'─' * inner}┘"
+    div    = f"├{'─' * inner}┤"
+
+    out = [c(top, CYAN)]
+    title_padded = f" {title} "
+    pad_total = inner - len(title_padded)
+    left = pad_total // 2
+    right = pad_total - left
+    out.append(c(f"│{' ' * left}{title_padded}{' ' * right}│", CYAN, BOLD))
+    out.append(c(div, CYAN))
+    for line in lines:
+        visible_len = len(re.sub(r'\033\[[0-9;]*m', '', line))
+        padding = max(0, inner - 2 - visible_len)
+        out.append(c("│", CYAN) + f" {line}{' ' * padding} " + c("│", CYAN))
+    out.append(c(bottom, CYAN))
+    return "\n".join(out)
+
+def print_header() -> None:
+    """Print the CausalLoop ASCII header."""
+    header = f"""
+{c(BOLD + CYAN)}
+   ██████╗ █████╗ ██╗   ██╗███████╗ █████╗ ██╗      ██████╗  ██████╗ ██████╗ 
+  ██╔════╝██╔══██╗██║   ██║██╔════╝██╔══██╗██║     ██╔═══██╗██╔═══██╗██╔══██╗
+  ██║     ███████║██║   ██║███████╗███████║██║     ██║   ██║██║   ██║██████╔╝
+  ██║     ██╔══██║██║   ██║╚════██║██╔══██║██║     ██║   ██║██║   ██║██╔═══╝ 
+  ╚██████╗██║  ██║╚██████╔╝███████║██║  ██║███████╗╚██████╔╝╚██████╔╝██║     
+   ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝     
+{RESET}{c(DIM + WHITE, '')}        Cross-Temporal Forensic Systems Analyst
+        Powered by Lyzr ADK + Gemini 2.5 Pro
+        Refuses to blame humans. Always.{RESET}
+"""
+    print(header)
+
+
+def print_menu(target_dir: str) -> None:
+    """Print the interactive skill selection menu."""
+    lines = [
+        c(f"Target : {target_dir}", WHITE),
+        c(f"Engine  : Lyzr ADK + Gemini 2.5 Pro", DIM),
+        "",
+        c("[1]", GREEN) + c("  🔬 repo-autopsy       ", BOLD) + "— Scan codebase for security anti-patterns",
+        c("[2]", RED)   + c("  🔑 secret-scanner     ", BOLD) + "— Hunt hardcoded credentials & API keys",
+        c("[3]", YELLOW)+ c("  📦 dependency-audit   ", BOLD) + "— Audit dependency posture & lockfiles",
+        c("[4]", BLUE)  + c("  📋 compliance-check   ", BOLD) + "— Audit project infrastructure & git hygiene",
+        c("[5]", MAGENTA)+c("  🔎 mortem-interrogator", BOLD) + "— Five Whys root cause analysis",
+        c("[6]", CYAN)  + c("  🔮 merge-risk         ", BOLD) + "— Evaluate PR diff for regression risk",
+        c("[7]", WHITE) + c("  ⚡ full-investigation  ", BOLD) + "— Run all 6 skills in sequence",
+        "",
+        c("[h]", DIM)   + "  help    " + c("[q]", DIM) + "  quit",
+    ]
+    print(box("CausalLoop — Skill Selection", lines))
+
+
+def severity_badge(level: str) -> str:
+    """Return a coloured severity badge string."""
+    badges = {
+        "CRITICAL":    c(" CRITICAL ", RED, BOLD),
+        "ELEVATED":    c(" ELEVATED ", YELLOW, BOLD),
+        "GUARDED":     c(" GUARDED  ", BLUE, BOLD),
+        "LOW":         c("   LOW    ", GREEN, BOLD),
+    }
+    return badges.get(level.upper(), c(f" {level} ", WHITE))
 
 
 # ──────────────────────────────────────────────────────────────────────
-#  CausalLoop identity (from SOUL.md + RULES.md)
+#  Environment validation
 # ──────────────────────────────────────────────────────────────────────
+
+def load_and_validate_env() -> tuple[str, str]:
+    """Load environment variables and raise early if keys are missing."""
+    load_dotenv()
+    lyzr_key   = os.getenv("LYZR_API_KEY", "")
+    google_key = os.getenv("GOOGLE_API_KEY", "")
+
+    if not lyzr_key or lyzr_key.startswith("your_"):
+        raise SystemExit(
+            c("❌  LYZR_API_KEY not set.\n", RED) +
+            "   Copy .env.example → .env and add your key.\n"
+            "   Free key at: https://studio.lyzr.ai"
+        )
+    if not google_key or google_key.startswith("your_"):
+        raise SystemExit(
+            c("❌  GOOGLE_API_KEY not set.\n", RED) +
+            "   Copy .env.example → .env and add your key.\n"
+            "   Free key at: https://aistudio.google.com"
+        )
+    return lyzr_key, google_key
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Agent identity
+# ──────────────────────────────────────────────────────────────────────
+
 CAUSAL_LOOP_ROLE = (
     "Cross-temporal forensic systems analyst. "
     "You think in causal chains, not snapshots. "
     "You possess the cynicism of an experienced forensic analyst, "
     "the unyielding patience of an NTSB investigator, "
-    "and the foresight of someone who has watched the exact same class of failure recur across ten different organizations."
+    "and the foresight of someone who has watched the exact same class of failure "
+    "recur across ten different organizations."
 )
 
 CAUSAL_LOOP_GOAL = (
@@ -48,102 +168,251 @@ You are CausalLoop — a cross-temporal forensic systems analyst.
 
 COMMUNICATION STYLE:
 - Evidence first, conclusion second. Every claim has a source — cite it relentlessly.
-- Speak in causal language: never say "this is broken." Say "this broke because of X, which will cause Y unless Z is addressed."
-- Deliver one finding at a time. Never bury the lead. Sharp, precise, no sugar-coating.
+- Speak in causal language: never say "this is broken." Say "this broke because of X,
+  which will cause Y unless Z is addressed."
+- Deliver one finding at a time. Sharp, precise, no sugar-coating.
 
 ABSOLUTE RULES — MUST ALWAYS:
-- Trace every finding to a causal origin. Explain not just WHAT failed, but WHY and HOW the condition persists.
-- Distinguish clearly between past failures, present risks, and future predictions.
-- Cite the exact file, line number, or incident timeline entry for every claim. Opinions without citations are null and void.
+1. Trace every finding to a causal origin. Explain not just WHAT failed, but WHY it
+   exists and HOW the condition is allowed to persist.
+2. Distinguish clearly between past failures (what happened), present risks (what is
+   vulnerable now), and future predictions (what will fail next if unchanged).
+3. Cite the exact file path and line number for every claim.
+4. End every report with a SYSTEMIC VERDICT that names the institutional failure,
+   not the individual.
+5. Mask all credential values — report presence and location, never the actual value.
 
 ABSOLUTE RULES — MUST NEVER:
-- Accept the proximate cause as the true root cause. Push deeper.
-- Generate a risk finding without a step-by-step causal explanation.
-- Close an investigation without issuing a systemic recommendation to prevent recurrence.
-- Attribute failure to "human error" — human error is a consequence of insufficient guardrails.
+1. Accept the proximate cause as the true root cause. Push deeper. Always.
+2. Generate a risk finding without a step-by-step causal explanation.
+3. Close an investigation without issuing a systemic recommendation for recurrence prevention.
+4. Attribute failure to "human error", "developer mistake", or "rushing".
+   Human error is a symptom of insufficient guardrails.
+5. Output an actual credential value, private key, or password — ALWAYS mask them.
 """
 
+
 # ──────────────────────────────────────────────────────────────────────
-#  Local tools — these run on YOUR machine and give the agent real power
+#  Local tools — these give the agent real filesystem access
 # ──────────────────────────────────────────────────────────────────────
 
 def read_file(filepath: str) -> str:
-    """Read the contents of a local file and return it as text."""
+    """
+    Read the full contents of a local file and return it as a UTF-8 string.
+    Use this before analyzing any source code, config, or incident report.
+    Returns an error string if the file is not found or cannot be read.
+    """
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read()
-        return content
+        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+            return f.read()
     except FileNotFoundError:
         return f"ERROR: File '{filepath}' not found."
-    except Exception as e:
-        return f"ERROR reading '{filepath}': {e}"
+    except PermissionError:
+        return f"ERROR: Permission denied reading '{filepath}'."
+    except Exception as exc:
+        return f"ERROR reading '{filepath}': {exc}"
 
 
 def write_file(filepath: str, content: str) -> str:
-    """Write content to a local file. Creates the file if it doesn't exist."""
+    """
+    Write content to a local file, creating parent directories if needed.
+    Use this to save forensic reports and findings to disk.
+    Returns a confirmation string on success, or an error string on failure.
+    """
     try:
-        os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
+        dir_part = os.path.dirname(filepath)
+        if dir_part:
+            os.makedirs(dir_part, exist_ok=True)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
-        return f"Successfully wrote {len(content)} characters to '{filepath}'."
-    except Exception as e:
-        return f"ERROR writing '{filepath}': {e}"
+        return f"OK: Wrote {len(content):,} characters to '{filepath}'."
+    except PermissionError:
+        return f"ERROR: Permission denied writing to '{filepath}'."
+    except Exception as exc:
+        return f"ERROR writing '{filepath}': {exc}"
 
 
 def list_directory(directory: str) -> str:
-    """List all files and subdirectories in a given directory."""
+    """
+    List all files and subdirectories inside a given directory path.
+    Use this first to understand the structure of a repository before analysis.
+    Returns a newline-separated list of entries, or an error string.
+    """
     try:
-        entries = os.listdir(directory)
+        if not os.path.isdir(directory):
+            return f"ERROR: '{directory}' is not a directory or does not exist."
+        entries: list[str] = []
+        for root, dirs, files in os.walk(directory):
+            # Skip hidden dirs and virtual envs
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ("node_modules", "__pycache__", ".git", "venv", ".venv")]
+            level = root.replace(directory, "").count(os.sep)
+            indent = "  " * level
+            entries.append(f"{indent}{os.path.basename(root)}/")
+            for fname in files:
+                entries.append(f"{indent}  {fname}")
         return "\n".join(entries) if entries else "(empty directory)"
-    except FileNotFoundError:
-        return f"ERROR: Directory '{directory}' not found."
-    except Exception as e:
-        return f"ERROR listing '{directory}': {e}"
+    except PermissionError:
+        return f"ERROR: Permission denied listing '{directory}'."
+    except Exception as exc:
+        return f"ERROR listing '{directory}': {exc}"
 
 
 def run_grep_scan(directory: str) -> str:
     """
-    Scan a directory for common security anti-patterns using grep.
-    Looks for: hardcoded passwords, eval(), exec(), TODO/FIXME, API keys, secrets.
+    Scan a local directory for common security anti-patterns.
+    Searches for: hardcoded credentials, dangerous functions (eval, exec),
+    SQL injection patterns, known secret formats (API keys, tokens, passwords),
+    TODO/FIXME technical debt markers, and debug flags left in production.
+    Returns a list of findings with [PATTERN] filepath:line → content.
+    Credential values are partially masked in output.
     """
-    patterns = [
-        "password",
-        "secret",
-        "api_key",
-        "eval(",
-        "exec(",
-        "TODO",
-        "FIXME",
-        "hardcoded",
-        "admin",
+    PATTERNS = [
+        # Credential anti-patterns
+        r"password\s*=\s*['\"][^'\"]{3,}['\"]",
+        r"passwd\s*=\s*['\"][^'\"]{3,}['\"]",
+        r"secret\s*=\s*['\"][^'\"]{3,}['\"]",
+        r"api_key\s*=\s*['\"][^'\"]{3,}['\"]",
+        r"apikey\s*=\s*['\"][^'\"]{3,}['\"]",
+        r"token\s*=\s*['\"][^'\"]{3,}['\"]",
+        # Known credential formats
+        r"AKIA[A-Z0-9]{16}",
+        r"ghp_[a-zA-Z0-9]{36}",
+        r"sk_live_[a-zA-Z0-9]+",
+        r"BEGIN (RSA|EC|OPENSSH) PRIVATE KEY",
+        # Dangerous functions
+        r"eval\(",
+        r"exec\(",
+        r"os\.system\(",
+        r"subprocess\.call\(",
+        r"pickle\.loads\(",
+        r"yaml\.load\([^,)]+\)",
+        # SQL injection
+        r"\"SELECT.*WHERE.*\" \+",
+        r"'SELECT.*WHERE.*' \+",
+        r"execute\(f['\"]SELECT",
+        # Debt markers
+        r"TODO",
+        r"FIXME",
+        r"HACK",
+        r"XXX",
+        r"WORKAROUND",
+        # Debug in prod
+        r"DEBUG\s*=\s*True",
+        r"debug\s*=\s*true",
+        r"console\.log\(",
     ]
-    results = []
-    for root, _dirs, files in os.walk(directory):
+
+    SKIP_EXTENSIONS = (
+        ".pyc", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg",
+        ".woff", ".woff2", ".ttf", ".eot", ".zip", ".gz", ".tar",
+        ".pdf", ".lock", ".sum",
+    )
+    SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build"}
+
+    findings: list[str] = []
+    compiled = [re.compile(p, re.IGNORECASE) for p in PATTERNS]
+
+    for root, dirs, files in os.walk(directory):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
         for fname in files:
-            if not fname.endswith((".py", ".js", ".ts", ".java", ".go", ".rb", ".yaml", ".yml", ".json", ".env")):
+            if any(fname.endswith(ext) for ext in SKIP_EXTENSIONS):
                 continue
             fpath = os.path.join(root, fname)
             try:
-                with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
-                    for i, line in enumerate(f, start=1):
-                        for pattern in patterns:
-                            if pattern.lower() in line.lower():
-                                results.append(f"[{pattern}] {fpath}:{i} → {line.rstrip()}")
-            except Exception:
+                with open(fpath, "r", encoding="utf-8", errors="ignore") as fh:
+                    for line_no, raw_line in enumerate(fh, start=1):
+                        line = raw_line.rstrip()
+                        for pat in compiled:
+                            if pat.search(line):
+                                # Mask credentials: keep first 4 chars after = and replace rest
+                                masked = re.sub(
+                                    r"(['\"])[A-Za-z0-9_\-]{8,}(['\"])",
+                                    r"\1[REDACTED]\2",
+                                    line
+                                )
+                                findings.append(
+                                    f"[{pat.pattern[:30]}] {fpath}:{line_no} → {masked.strip()}"
+                                )
+                                break  # one finding per line
+            except (PermissionError, OSError):
                 continue
 
-    if not results:
-        return "No security anti-patterns found."
-    return "\n".join(results)
+    if not findings:
+        return "No security anti-patterns detected."
+    return f"Found {len(findings)} pattern(s):\n" + "\n".join(findings)
 
 
 # ──────────────────────────────────────────────────────────────────────
-#  Initialize Lyzr Studio + Create the Agent
+#  Remote repo support — clone any GitHub URL to a temp dir
 # ──────────────────────────────────────────────────────────────────────
 
-def create_causal_loop_agent():
-    """Create and configure the CausalLoop agent via Lyzr ADK."""
-    studio = Studio(api_key=LYZR_API_KEY)
+def clone_repo(url: str) -> tuple[str, str]:
+    """
+    Clone a public git repository to a temporary directory.
+    Returns (temp_dir_path, repo_name) on success.
+    Raises SystemExit with an error message on failure.
+    """
+    print(c(f"\n  Cloning {url} ...", DIM))
+    repo_name = url.rstrip("/").split("/")[-1].replace(".git", "")
+    tmp = tempfile.mkdtemp(prefix="causalloop-")
+    result = subprocess.run(
+        ["git", "clone", "--depth=50", url, tmp],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise SystemExit(
+            c(f"❌  Failed to clone repo: {result.stderr.strip()}", RED)
+        )
+    print(c(f"  ✅ Cloned to temp dir. Analyzing: {repo_name}\n", GREEN))
+    return tmp, repo_name
+
+
+def cleanup_repo(tmp_dir: str) -> None:
+    """Remove a temporary cloned repo directory."""
+    if tmp_dir and os.path.isdir(tmp_dir):
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        print(c("\n  Cleaned up temp clone.", DIM))
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Auto-generate diff.txt if not present (merge-risk skill)
+# ──────────────────────────────────────────────────────────────────────
+
+def get_or_generate_diff(target_dir: str) -> Optional[str]:
+    """
+    Look for diff.txt in the root, then try to generate one from git history.
+    Returns filepath to the diff file, or None if unavailable.
+    """
+    diff_path = os.path.join(target_dir, "diff.txt")
+    if os.path.exists(diff_path):
+        return diff_path
+
+    # Try to auto-generate from git
+    result = subprocess.run(
+        ["git", "-C", target_dir, "diff", "HEAD~1", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0 and result.stdout.strip():
+        auto_path = os.path.join(target_dir, "diff.txt")
+        with open(auto_path, "w", encoding="utf-8") as f:
+            f.write(result.stdout)
+        print(c("  ℹ️  Auto-generated diff.txt from git history (HEAD~1..HEAD)", DIM))
+        return auto_path
+
+    return None
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Lyzr Agent factory
+# ──────────────────────────────────────────────────────────────────────
+
+def create_agent() -> object:
+    """Create and configure the CausalLoop Lyzr agent with all local tools."""
+    lyzr_key, _ = load_and_validate_env()
+    studio = Studio(api_key=lyzr_key)
 
     agent = studio.create_agent(
         name="CausalLoop",
@@ -151,11 +420,10 @@ def create_causal_loop_agent():
         role=CAUSAL_LOOP_ROLE,
         goal=CAUSAL_LOOP_GOAL,
         instructions=CAUSAL_LOOP_INSTRUCTIONS,
-        temperature=0.3,       # Low temp → precise, deterministic forensic analysis
-        memory=30,             # Remember context across skill executions
+        temperature=0.3,
+        memory=30,
     )
 
-    # Register local tools so the agent can read/write/scan files on your machine
     agent.add_tool(read_file)
     agent.add_tool(write_file)
     agent.add_tool(list_directory)
@@ -165,81 +433,429 @@ def create_causal_loop_agent():
 
 
 # ──────────────────────────────────────────────────────────────────────
-#  Demo runner — executes all 3 skills sequentially
+#  Skill runners
 # ──────────────────────────────────────────────────────────────────────
 
-def run_demo():
-    print("=" * 60)
-    print("  CausalLoop — Forensic Systems Analyst")
-    print("  Powered by Lyzr ADK + Gemini 2.5 Pro")
-    print("=" * 60)
+def run_skill_repo_autopsy(agent: object, target_dir: str) -> str:
+    """Execute skill 1: repo-autopsy — scan codebase for vulnerabilities."""
+    print(c("\n🔬 PHASE 1  |  repo-autopsy", CYAN, BOLD))
+    print(c("   Scanning the past — what was written and why it is dangerous.", DIM))
+    print(c("─" * 62, DIM))
 
-    agent = create_causal_loop_agent()
+    prompt = f"""
+Execute the repo-autopsy skill on the directory: "{target_dir}"
 
-    # ── SKILL 1: The Past (repo-autopsy) ─────────────────────────────
-    print("\n🔬 PHASE 1: Scanning the Past (repo-autopsy)")
-    print("-" * 50)
+Steps:
+1. Use the `list_directory` tool on "{target_dir}" to understand the repo structure.
+2. Use the `run_grep_scan` tool on "{target_dir}" to find security anti-patterns.
+3. For each file that contains findings, use `read_file` to read it and analyze in detail.
+4. For every finding:
+   - Cite the exact file path and line number
+   - Assign a severity: CRITICAL, ELEVATED, or DEPRESSINGLY-PREDICTABLE
+   - Write the full causal chain: what is wrong → why it exists → what systemic failure allows it
+5. Use `write_file` to save the complete forensic report to "{target_dir}/autopsy-report.md".
+   Format the report as markdown with clear sections per finding.
+6. End with a SYSTEMIC VERDICT: name the institutional failure pattern, not the individual developer.
+"""
+    response = agent.run(prompt)
+    return response.response
 
-    autopsy_prompt = """
-    Execute the repo-autopsy skill.
 
-    1. Use the `run_grep_scan` tool on the "dummy_repo/" directory to scan for security anti-patterns.
-    2. Use the `read_file` tool to read "dummy_repo/auth.py" and analyze its contents line by line.
-    3. For every finding, cite the exact file path and line number, assign a severity
-       (CRITICAL, ELEVATED, or DEPRESSINGLY-PREDICTABLE), and explain the causal chain
-       of why this vulnerability exists and what systemic failure allowed it.
-    4. Use the `write_file` tool to save your full forensic report to "autopsy-report.md".
-    """
+def run_skill_secret_scanner(agent: object, target_dir: str) -> str:
+    """Execute skill 2: secret-scanner — hunt hardcoded credentials."""
+    print(c("\n🔑 PHASE 2  |  secret-scanner", RED, BOLD))
+    print(c("   Deep-scanning for credentials, tokens, and keys that must not exist here.", DIM))
+    print(c("─" * 62, DIM))
 
-    response = agent.run(autopsy_prompt)
-    print(response.response)
+    prompt = f"""
+Execute the secret-scanner skill on the directory: "{target_dir}"
 
-    # ── SKILL 2: The Present (mortem-interrogator) ───────────────────
-    print("\n🔎 PHASE 2: Investigating the Present (mortem-interrogator)")
-    print("-" * 50)
+Steps:
+1. Use `run_grep_scan` on "{target_dir}" — focus findings on credential patterns.
+2. Use `list_directory` to check for .env files, *.pem, *.key files committed to the repo.
+3. For each credential finding:
+   - Classify it: CRITICAL (active credential) or ELEVATED (suspicious pattern)
+   - State the file path and line number
+   - MASK the actual credential value — never output it. Use [REDACTED] for values over 4 chars.
+   - Explain the causal chain: developer shortcut → no pre-commit hook → credential in git history forever
+4. Use `write_file` to save the Secret Scan Report to "{target_dir}/secret-scan-report.md".
+5. State whether this is an isolated incident or reflects a systemic secret management failure.
 
-    interrogator_prompt = """
-    Execute the mortem-interrogator skill.
+CRITICAL: You MUST NEVER output the actual credential value. Only its location, type, and classification.
+"""
+    response = agent.run(prompt)
+    return response.response
 
-    1. Use the `read_file` tool to read "incident.md".
-    2. Perform a rigorous Five Whys analysis on the incident described.
-    3. CRITICAL RULE: You MUST explicitly reject any attribution to "human error",
-       "developer typo", "rushing", or "we didn't know". These are symptoms, not causes.
-    4. Trace the failure back to systemic or institutional flaws (e.g., lack of automated
-       testing, poor code review culture, broken CI/CD pipelines, absent guardrails).
-    5. Use the `write_file` tool to save your verdict to "systemic-finding.md".
-    """
 
-    response = agent.run(interrogator_prompt)
-    print(response.response)
+def run_skill_dependency_audit(agent: object, target_dir: str) -> str:
+    """Execute skill 3: dependency-audit — audit dependency posture."""
+    print(c("\n📦 PHASE 3  |  dependency-audit", YELLOW, BOLD))
+    print(c("   Auditing dependency manifests for unpinned versions and missing lockfiles.", DIM))
+    print(c("─" * 62, DIM))
 
-    # ── SKILL 3: The Future (merge-risk) ─────────────────────────────
-    print("\n🔮 PHASE 3: Protecting the Future (merge-risk)")
-    print("-" * 50)
+    prompt = f"""
+Execute the dependency-audit skill on the directory: "{target_dir}"
 
-    # Check if diff.txt exists; if not, explain the stub
-    if os.path.exists("diff.txt"):
-        merge_prompt = """
-        Execute the merge-risk skill.
+Steps:
+1. Use `list_directory` on "{target_dir}" to find dependency manifests:
+   requirements.txt, package.json, Pipfile, pyproject.toml, setup.py, go.mod, Cargo.toml
+2. Use `read_file` to read each manifest found.
+3. Analyze:
+   a) Are versions pinned (==x.y.z) or unpinned (>=, *, no version)?
+   b) Is there a corresponding lockfile? (requirements.lock, package-lock.json, Pipfile.lock, poetry.lock)
+   c) Are dev dependencies separated from production dependencies?
+   d) Flag any known historically vulnerable package names.
+4. Assign a RISK RATING: CRITICAL / ELEVATED / GUARDED / LOW
+5. Use `write_file` to save the Dependency Audit Report to "{target_dir}/dependency-audit-report.md".
+6. The SYSTEMIC VERDICT must identify whether this reflects a team-wide process failure.
+"""
+    response = agent.run(prompt)
+    return response.response
 
-        1. Use `read_file` to read "diff.txt" which represents upcoming merge changes.
-        2. Cross-reference the changed files against findings from the repo-autopsy
-           and the systemic root causes from the mortem-interrogator.
-        3. Evaluate the risk: are these changes about to repeat the same institutional
-           mistakes that caused the last incident?
-        4. Use `write_file` to output your warning to "merge-risk.md".
-        """
-        response = agent.run(merge_prompt)
-        print(response.response)
-    else:
-        print("   ℹ️  No diff.txt found — merge-risk is stubbed for the demo.")
-        print("   In production, CausalLoop would intercept PRs and map changes")
-        print("   against systemic findings to block history from repeating.\n")
 
-    print("\n" + "=" * 60)
-    print("  ✅ Demo Complete — All CausalLoop skills executed.")
-    print("=" * 60)
+def run_skill_compliance_check(agent: object, target_dir: str) -> str:
+    """Execute skill 4: compliance-check — audit project infrastructure."""
+    print(c("\n📋 PHASE 4  |  compliance-check", BLUE, BOLD))
+    print(c("   Auditing project infrastructure, git hygiene, and README quality.", DIM))
+    print(c("─" * 62, DIM))
+
+    prompt = f"""
+Execute the compliance-check skill on the directory: "{target_dir}"
+
+Steps:
+1. Use `list_directory` on "{target_dir}" to get the full file tree.
+2. Check for presence of these files (MANDATORY or STRONG):
+   - README.md (MANDATORY)
+   - LICENSE (MANDATORY — without it, the code is legally All Rights Reserved)
+   - .gitignore (MANDATORY)
+   - CONTRIBUTING.md (STRONG)
+   - SECURITY.md (STRONG)
+   - .env.example (STRONG)
+   - requirements.txt or equivalent (MANDATORY)
+3. Check for CI/CD: .github/workflows/, .gitlab-ci.yml, .circleci/
+4. Check for git hygiene violations (files that should never be committed):
+   - .env files, node_modules/, __pycache__/, *.pyc, .DS_Store, dist/, build/
+   - Look for merge conflict markers: <<<<<<, =======, >>>>>>>
+5. If README.md exists, use `read_file` to read it — check it has: description, install, usage.
+6. Assign an Infrastructure Score from 0 to 10.
+7. Use `write_file` to save the Compliance Report to "{target_dir}/compliance-report.md".
+"""
+    response = agent.run(prompt)
+    return response.response
+
+
+def run_skill_mortem_interrogator(agent: object, target_dir: str) -> str:
+    """Execute skill 5: mortem-interrogator — Five Whys root cause analysis."""
+    print(c("\n🔎 PHASE 5  |  mortem-interrogator", MAGENTA, BOLD))
+    print(c("   Investigating the present — Five Whys systemic root cause analysis.", DIM))
+    print(c("─" * 62, DIM))
+
+    incident_path = os.path.join(target_dir, "incident.md")
+    if not os.path.exists(incident_path):
+        print(c(f"   ⚠️  No incident.md found in {target_dir}.", YELLOW))
+        print(c("   Creating a sample incident report from autopsy findings...", DIM))
+        sample_incident = """# Incident Report
+
+## Date: 2026-04-08
+
+## Summary
+A hardcoded API key was discovered in the source code repository. The key was
+committed to the public repository and was live for an unknown duration.
+
+## Timeline
+- Developer created a quick authentication module using a hardcoded key during prototyping
+- Code was merged to main branch without a security review
+- No pre-commit hooks or CI scanning detected the credential
+- An external researcher reported the exposure via a GitHub search
+
+## Initial Assessment
+"Developer oversight — they forgot to move the key to an environment variable."
+
+## Impact
+Unknown. Key has been rotated. Full blast radius under investigation.
+"""
+        try:
+            with open(incident_path, "w", encoding="utf-8") as f:
+                f.write(sample_incident)
+            print(c(f"   ✅  Created {incident_path}", GREEN))
+        except Exception as exc:
+            print(c(f"   ❌  Could not create incident.md: {exc}", RED))
+
+    prompt = f"""
+Execute the mortem-interrogator skill. Read the incident report at: "{incident_path}"
+
+Steps:
+1. Use `read_file` to read "{incident_path}".
+2. Perform a rigorous Five Whys analysis:
+   - Why 1: The immediate technical cause
+   - Why 2: The process failure that allowed it
+   - Why 3: The team/culture factor
+   - Why 4: The organizational policy gap
+   - Why 5: The systemic institutional failure
+
+3. MANDATORY: You MUST explicitly reject "human error", "developer oversight",
+   "they forgot", or "rushing" as root causes. State clearly:
+   "REJECTED: [the suggested cause]. This is a symptom, not a cause."
+
+4. The TRUE ROOT CAUSE must be a systemic or institutional failure —
+   absent automated testing, broken review culture, missing guardrails, etc.
+
+5. Issue a systemic recommendation that, if implemented, would make this class
+   of failure structurally impossible — not just unlikely.
+
+6. Use `write_file` to save your verdict to "{target_dir}/systemic-finding.md".
+"""
+    response = agent.run(prompt)
+    return response.response
+
+
+def run_skill_merge_risk(agent: object, target_dir: str) -> str:
+    """Execute skill 6: merge-risk — evaluate PR diff for regression risk."""
+    print(c("\n🔮 PHASE 6  |  merge-risk", CYAN, BOLD))
+    print(c("   Guarding the future — cross-referencing incoming changes against past findings.", DIM))
+    print(c("─" * 62, DIM))
+
+    diff_path = get_or_generate_diff(target_dir)
+
+    if not diff_path:
+        msg = (
+            c("   ℹ️  No diff.txt found and no git history available.\n", DIM) +
+            "   In production, CausalLoop intercepts PRs and maps changes\n"
+            "   against past systemic findings to block history from repeating.\n"
+            "   To use this skill: create diff.txt with your PR's git diff output."
+        )
+        print(msg)
+        return "merge-risk: skipped — no diff available."
+
+    prompt = f"""
+Execute the merge-risk skill.
+
+Steps:
+1. Use `read_file` to read the diff at: "{diff_path}"
+2. Use `read_file` to read the autopsy report (if it exists) at: "{target_dir}/autopsy-report.md"
+3. Use `read_file` to read the systemic finding (if it exists) at: "{target_dir}/systemic-finding.md"
+
+4. Cross-reference the diff against known findings:
+   - Do the changed files include any that previously had CRITICAL findings?
+   - Do the changes introduce any of the same anti-patterns that caused past incidents?
+   - Are there any new dependencies being added without pinning?
+
+5. Assign a MERGE RISK SCORE:
+   - BLOCK: Changes repeat a previously identified CRITICAL finding
+   - WARN:  Changes touch high-risk areas identified in autopsy
+   - CAUTION: New code follows patterns that correlate with past debt accumulation
+   - CLEAR: No regression risk detected
+
+6. Use `write_file` to save the Merge Risk Assessment to "{target_dir}/merge-risk-report.md".
+7. The verdict must state: APPROVE / WARN / BLOCK — and the causal justification.
+"""
+    response = agent.run(prompt)
+    return response.response
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Memory — persist findings across sessions
+# ──────────────────────────────────────────────────────────────────────
+
+MEMORY_PATH = os.path.join(os.path.dirname(__file__), "memory", "findings.json")
+
+def save_to_memory(target: str, skills_run: list[str], timestamp: str) -> None:
+    """Append a session record to memory/findings.json."""
+    try:
+        os.makedirs(os.path.dirname(MEMORY_PATH), exist_ok=True)
+        data: dict = {"version": 1, "sessions": [], "repos_analyzed": []}
+        if os.path.exists(MEMORY_PATH):
+            with open(MEMORY_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+        session = {
+            "timestamp": timestamp,
+            "target": target,
+            "skills_run": skills_run,
+        }
+        data.setdefault("sessions", []).append(session)
+        if target not in data.get("repos_analyzed", []):
+            data.setdefault("repos_analyzed", []).append(target)
+        data["last_updated"] = timestamp
+
+        with open(MEMORY_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass  # Memory is non-critical — never crash because of it
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Skill dispatcher
+# ──────────────────────────────────────────────────────────────────────
+
+SKILL_MAP: dict[str, tuple[str, callable]] = {
+    "1": ("repo-autopsy",        run_skill_repo_autopsy),
+    "2": ("secret-scanner",      run_skill_secret_scanner),
+    "3": ("dependency-audit",    run_skill_dependency_audit),
+    "4": ("compliance-check",    run_skill_compliance_check),
+    "5": ("mortem-interrogator", run_skill_mortem_interrogator),
+    "6": ("merge-risk",          run_skill_merge_risk),
+}
+
+SKILL_NAME_MAP: dict[str, str] = {
+    "repo-autopsy":        "1",
+    "secret-scanner":      "2",
+    "dependency-audit":    "3",
+    "compliance-check":    "4",
+    "mortem-interrogator": "5",
+    "merge-risk":          "6",
+}
+
+
+def dispatch_skill(choice: str, agent: object, target_dir: str) -> Optional[str]:
+    """Run a single skill by its menu key or name. Returns the response text."""
+    key = SKILL_NAME_MAP.get(choice, choice)
+    if key not in SKILL_MAP:
+        print(c(f"  ❌  Unknown skill: '{choice}'", RED))
+        return None
+    _name, runner = SKILL_MAP[key]
+    return runner(agent, target_dir)
+
+
+def run_all_skills(agent: object, target_dir: str) -> list[str]:
+    """Run all 6 skills in sequence."""
+    results: list[str] = []
+    for key in ("1", "2", "3", "4", "5", "6"):
+        name, runner = SKILL_MAP[key]
+        result = runner(agent, target_dir)
+        results.append(result)
+    return results
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Interactive CLI loop
+# ──────────────────────────────────────────────────────────────────────
+
+def interactive_loop(agent: object, target_dir: str) -> None:
+    """Main interactive command loop."""
+    skills_run: list[str] = []
+
+    while True:
+        print()
+        print_menu(target_dir)
+        try:
+            choice = input(c("\nCausalLoop> ", CYAN, BOLD)).strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print(c("\n\n  Exiting CausalLoop. The loop is closed.\n", DIM))
+            break
+
+        if choice in ("q", "quit", "exit"):
+            print(c("\n  Exiting CausalLoop. The loop is closed.\n", DIM))
+            break
+
+        if choice in ("h", "help", ""):
+            continue
+
+        if choice == "7":
+            print(c("\n  ⚡ Running full investigation — all 6 skills...", MAGENTA, BOLD))
+            run_all_skills(agent, target_dir)
+            skills_run.extend(["repo-autopsy", "secret-scanner", "dependency-audit",
+                                "compliance-check", "mortem-interrogator", "merge-risk"])
+            print(c("\n  ✅ Full investigation complete.", GREEN, BOLD))
+            continue
+
+        result = dispatch_skill(choice, agent, target_dir)
+        if result:
+            name = SKILL_MAP.get(SKILL_NAME_MAP.get(choice, choice), (choice,))[0]
+            skills_run.append(name)
+            print(c(f"\n  ✅ Skill '{name}' complete.", GREEN))
+
+    # Persist session to memory
+    save_to_memory(target_dir, skills_run, datetime.utcnow().isoformat() + "Z")
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Entry point — argument parsing
+# ──────────────────────────────────────────────────────────────────────
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="causalloop",
+        description="CausalLoop — Cross-temporal forensic systems analyst.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python run_lyzr.py                                  # Interactive menu (local dummy_repo/)
+  python run_lyzr.py --repo https://github.com/org/repo
+  python run_lyzr.py --skill repo-autopsy
+  python run_lyzr.py --skill secret-scanner --repo https://github.com/org/repo
+  python run_lyzr.py --all
+        """,
+    )
+    parser.add_argument(
+        "--repo",
+        metavar="URL",
+        help="URL of a public GitHub/GitLab repo to clone and analyze",
+    )
+    parser.add_argument(
+        "--skill",
+        metavar="SKILL",
+        choices=list(SKILL_NAME_MAP.keys()),
+        help="Run a single specific skill and exit",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all 6 skills in sequence and exit (non-interactive)",
+    )
+    parser.add_argument(
+        "--target",
+        metavar="DIR",
+        default=os.path.join(os.path.dirname(__file__), "dummy_repo"),
+        help="Local directory to analyze (default: dummy_repo/)",
+    )
+
+    args = parser.parse_args()
+
+    print_header()
+    load_and_validate_env()
+
+    tmp_dir: Optional[str] = None
+    target_dir: str = args.target
+
+    # Clone remote repo if requested
+    if args.repo:
+        tmp_dir, _name = clone_repo(args.repo)
+        target_dir = tmp_dir
+
+    # Validate target directory
+    if not os.path.isdir(target_dir):
+        print(c(f"❌  Target directory not found: {target_dir}", RED))
+        print(c(f"   Create it or pass a valid --target path.", DIM))
+        raise SystemExit(1)
+
+    try:
+        print(c(f"  Initializing Lyzr ADK agent...", DIM))
+        agent = create_agent()
+        print(c(f"  ✅ Agent ready. Target: {os.path.abspath(target_dir)}\n", GREEN))
+
+        if args.skill:
+            # Single skill mode
+            dispatch_skill(args.skill, agent, target_dir)
+            save_to_memory(target_dir, [args.skill], datetime.utcnow().isoformat() + "Z")
+        elif args.all:
+            # Run all skills non-interactively
+            print(c("  ⚡ Running all 6 skills in sequence...\n", MAGENTA, BOLD))
+            run_all_skills(agent, target_dir)
+            save_to_memory(
+                target_dir,
+                list(SKILL_NAME_MAP.keys()),
+                datetime.utcnow().isoformat() + "Z"
+            )
+            print(c("\n  ✅ Full investigation complete.", GREEN, BOLD))
+        else:
+            # Interactive menu mode
+            interactive_loop(agent, target_dir)
+
+    finally:
+        if tmp_dir:
+            cleanup_repo(tmp_dir)
 
 
 if __name__ == "__main__":
-    run_demo()
+    main()

@@ -1,0 +1,40 @@
+name: grep-scanner
+description: |
+  Scans a local directory for common security anti-patterns.
+  Searches for hardcoded credentials, dangerous functions (eval, exec),
+  TODO/FIXME markers, and common secret patterns (API keys, tokens, passwords).
+  Returns a list of findings with file path, line number, and matched pattern.
+input_schema:
+  properties:
+    directory:
+      type: string
+      description: "Absolute or relative path to the directory to scan"
+  required:
+    - directory
+constraints:
+  allowed_operations:
+    - read_file
+    - list_directory
+  denied_operations:
+    - write_file
+    - execute_code
+    - network_request
+output_schema:
+  properties:
+    findings:
+      type: array
+      items:
+        type: object
+        properties:
+          pattern:
+            type: string
+            description: "The anti-pattern that was matched"
+          filepath:
+            type: string
+            description: "Path to the file containing the match"
+          line_number:
+            type: integer
+            description: "Line number of the match"
+          line_content:
+            type: string
+            description: "The matched line content (credentials are masked)"
