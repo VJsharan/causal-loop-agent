@@ -28,6 +28,8 @@ import shutil
 import tempfile
 import argparse
 import subprocess
+import urllib.request
+import urllib.error
 from datetime import datetime, timezone
 from typing import Optional
 from dotenv import load_dotenv
@@ -451,6 +453,68 @@ def run_grep_scan(directory: str) -> str:
     return "\n".join(output_lines)
 
 
+def fetch_github_issues(directory: str) -> str:
+    """
+    Fetch the latest 5 open issues from GitHub for the repository located at `directory`.
+    This gives the agent real-world context of production fires and systemic bugs.
+    Uses `git config` to extract the origin URL and queries the public GitHub REST API.
+    Returns a formatted string of issues or an error message.
+    """
+    try:
+        # Get the remote origin URL
+        result = subprocess.run(
+            ["git", "-C", directory, "config", "--get", "remote.origin.url"],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode != 0:
+            return "ERROR: Not a git repository or no remote.origin.url configured."
+        
+        url = result.stdout.strip()
+        
+        # Parse owner and repo
+        owner_repo = None
+        if "github.com" in url:
+            if url.startswith("http"):
+                parts = url.split("/")
+                if len(parts) >= 5:
+                    owner_repo = f"{parts[3]}/{parts[4].replace('.git', '')}"
+            elif url.startswith("git@"):
+                parts = url.split(":")
+                if len(parts) == 2:
+                    owner_repo = parts[1].replace('.git', '')
+                    
+        if not owner_repo:
+            return "ERROR: Remote origin is not a recognized GitHub URL."
+            
+        api_url = f"https://api.github.com/repos/{owner_repo}/issues?state=open&per_page=5"
+        
+        req = urllib.request.Request(api_url, headers={"User-Agent": "CausalLoop-Agent"})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status != 200:
+                return f"ERROR: GitHub API returned status {response.status}"
+            data = json.loads(response.read().decode('utf-8'))
+            
+        if not data:
+            return f"No open issues found for {owner_repo}."
+            
+        findings = [f"Latest Open Issues for {owner_repo}:"]
+        for issue in data:
+            issue_type = "Pull Request" if "pull_request" in issue else "Issue"
+            title = issue.get("title", "No Title")
+            num = issue.get("number", "0")
+            body = issue.get("body", "") or ""
+            # Truncate to save context
+            snippet = body[:250].replace('\n', ' ') + ("..." if len(body) > 250 else "")
+            findings.append(f"- [{issue_type} #{num}] {title}\n  Description snippet: {snippet}")
+            
+        return "\n".join(findings)
+    except subprocess.TimeoutExpired:
+        return "ERROR: git config command timed out."
+    except urllib.error.URLError as e:
+        return f"ERROR: Failed to fetch issues from GitHub API: {e}"
+    except Exception as e:
+        return f"ERROR: Unexpected error fetching issues: {e}"
+
 # ──────────────────────────────────────────────────────────────────────
 #  Remote repo support — clone any GitHub URL to a temp dir
 # ──────────────────────────────────────────────────────────────────────
@@ -577,6 +641,7 @@ def create_agent() -> object:
     agent.add_tool(write_file)
     agent.add_tool(list_directory)
     agent.add_tool(run_grep_scan)
+    agent.add_tool(fetch_github_issues)
 
     return agent
 
@@ -730,28 +795,30 @@ Unknown. Key has been rotated. Full blast radius under investigation.
             print(c(f"   ❌  Could not create incident.md: {exc}", RED))
 
     prompt = f"""
-Execute the mortem-interrogator skill. Read the incident report at: "{incident_path}"
+Execute the mortem-interrogator skill on the target directory "{target_dir}".
 
 Steps:
-1. Use `read_file` to read "{incident_path}".
-2. Perform a rigorous Five Whys analysis:
+1. Attempt to read the local incident report at "{incident_path}" using the `read_file` tool if it exists to understand any local context.
+2. If this is a public repository, you MUST use the `fetch_github_issues` tool on "{target_dir}" to pull real-world bugs and open production fires from GitHub.
+3. Pick the most systemic or critical bug/incident from the combined context to analyze. 
+4. Perform a rigorous Five Whys analysis on that specific issue:
    - Why 1: The immediate technical cause
    - Why 2: The process failure that allowed it
    - Why 3: The team/culture factor
    - Why 4: The organizational policy gap
    - Why 5: The systemic institutional failure
 
-3. MANDATORY: You MUST explicitly reject "human error", "developer oversight",
+5. MANDATORY: You MUST explicitly reject "human error", "developer oversight",
    "they forgot", or "rushing" as root causes. State clearly:
    "REJECTED: [the suggested cause]. This is a symptom, not a cause."
 
-4. The TRUE ROOT CAUSE must be a systemic or institutional failure —
+6. The TRUE ROOT CAUSE must be a systemic or institutional failure —
    absent automated testing, broken review culture, missing guardrails, etc.
 
-5. Issue a systemic recommendation that, if implemented, would make this class
+7. Issue a systemic recommendation that, if implemented, would make this class
    of failure structurally impossible — not just unlikely.
 
-6. Present your full systemic verdict directly in the response. DO NOT write any files.
+8. Present your full systemic verdict directly in the response. DO NOT write any files.
 """
     response = agent.run(prompt)
     return response.response
