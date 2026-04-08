@@ -28,7 +28,7 @@ import shutil
 import tempfile
 import argparse
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from dotenv import load_dotenv
 from lyzr import Studio
@@ -810,7 +810,7 @@ def interactive_loop(agent: object, target_dir: str) -> None:
             print(c(f"\n  ✅ Done.", GREEN))
 
     # Persist session to memory
-    save_to_memory(target_dir, skills_run, datetime.utcnow().isoformat() + "Z")
+    save_to_memory(target_dir, skills_run, datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'))
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -881,7 +881,7 @@ Examples:
         if args.skill:
             # Single skill mode
             dispatch_skill(args.skill, agent, target_dir)
-            save_to_memory(target_dir, [args.skill], datetime.utcnow().isoformat() + "Z")
+            save_to_memory(target_dir, [args.skill], datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'))
         elif args.all:
             # Run all skills non-interactively
             print(c("  ⚡ Running all 6 skills in sequence...\n", MAGENTA, BOLD))
@@ -889,7 +889,7 @@ Examples:
             save_to_memory(
                 target_dir,
                 list(SKILL_MAP.keys()),
-                datetime.utcnow().isoformat() + "Z"
+                datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
             )
             print(c("\n  ✅ Full investigation complete.", GREEN, BOLD))
         else:
