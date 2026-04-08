@@ -95,8 +95,9 @@ if (!GOOGLE_API_KEY || GOOGLE_API_KEY.startsWith("your_")) {
 const genAI  = new GoogleGenerativeAI(GOOGLE_API_KEY);
 const MODELS = [
   "gemini-2.5-pro",
+  "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-1.5-pro",
+  "gemini-1.5-flash",
 ];
 
 /**
