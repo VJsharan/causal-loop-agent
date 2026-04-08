@@ -1,98 +1,69 @@
 <div align="center">
 
-# 🕵️‍♂️ CausalLoop
+<h1>🕵️‍♂️ CausalLoop</h1>
 
-### The AI That Refuses to Blame Humans
+<p><strong>The AI That Refuses to Blame Humans.</strong></p>
 
-[![Lyzr ADK](https://img.shields.io/badge/Lyzr_ADK-v0.1.8-4F46E5?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48L3N2Zz4=)](https://docs.lyzr.ai/lyzr-adk/overview)
-[![Gemini 2.5 Pro](https://img.shields.io/badge/Gemini_2.5_Pro-Google-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
-[![GitAgent](https://img.shields.io/badge/GitAgent-Standard-F97316?style=for-the-badge&logo=git&logoColor=white)](https://gitagent.sh)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)](LICENSE)
+<p><em>CausalLoop investigates code failures the way the NTSB investigates plane crashes. It doesn't care who wrote the bug. It cares about why the system allowed the bug to exist.</em></p>
 
----
+<br/>
 
-**CausalLoop** is an AI forensic agent that investigates code failures the way the NTSB investigates plane crashes.
+<!-- BADGES -->
+<div align="center">
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/VJsharan/causal-loop-agent"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white"/></a></td>
+    <td align="center"><a href="https://docs.lyzr.ai/lyzr-adk/overview"><img src="https://img.shields.io/badge/Lyzr_ADK-v0.1.8-4F46E5?style=for-the-badge"/></a></td>
+    <td align="center"><a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/Gemini_2.5_Pro-Google-4285F4?style=for-the-badge&logo=google&logoColor=white"/></a></td>
+    <td align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge"/></a></td>
+    <td align="center"><a href="https://gitagent.sh"><img src="https://img.shields.io/badge/GitAgent-Standard-F97316?style=for-the-badge&logo=git&logoColor=white"/></a></td>
+  </tr>
+</table>
+</div>
 
-It doesn't care who wrote the bug. It cares about **why the system allowed the bug to exist.**
-
-> *"Human error is not a root cause. It is a consequence of insufficient guardrails."*
-> — CausalLoop, every single time.
+<br/>
 
 </div>
 
 ---
 
-## 🧠 What Does CausalLoop Actually Do?
+## 🧠 What is this?
 
-Most tools say *"you have a bug on line 7."*
+`CausalLoop` is a dual-runtime (Python & Node.js) forensic AI agent that **lives inside your terminal** - defined using the [gitagent open standard](https://github.com/open-gitagent/gitagent). It reads your codebase and open GitHub issues, turning raw structural failures into systemic institutional verdicts.
 
-CausalLoop says *"the bug on line 7 exists because your CI pipeline has zero static analysis, your team has no enforced code review policy, and your deadline pressure systematically incentivizes shipping unsafe code."*
+**What makes it different?** While others just lint code or point fingers at developers, CausalLoop executes **high-speed ephemeral shallow clones** (`--depth=1`) of massive public repositories in seconds, intercepts live production fires from the GitHub API, and conducts rigorous *Five Whys* root cause analysis. It strictly refuses to accept "human error" as a verdict.
 
-It works across **three timelines**:
-
-| Phase | Skill | What It Does | Output |
-|-------|-------|-------------|--------|
-| 🔬 **The Past** | `repo-autopsy` | Scans your codebase for security flaws, hardcoded secrets, and tech debt | `autopsy-report.md` |
-| 🔎 **The Present** | `mortem-interrogator` | Reads incident reports and performs a Five Whys analysis to find the *real* root cause | `systemic-finding.md` |
-| 🔮 **The Future** | `merge-risk` | Compares incoming code changes against past findings to warn before you repeat mistakes | `merge-risk.md` |
+> *"Human error is not a root cause. It is a consequence of insufficient guardrails."*
+> — CausalLoop
 
 ---
 
-## ⚡ How It Works
+## 📚 Table of Contents
 
-```
-                    ┌─────────────────────┐
-                    │     Your Codebase    │
-                    │  (dummy_repo/*.py)   │
-                    └────────┬────────────┘
-                             │
-                             ▼
-              ┌──────────────────────────────┐
-              │      🔬 repo-autopsy         │
-              │  grep scan → read files →    │
-              │  cite lines → assign blame   │
-              └──────────────┬───────────────┘
-                             │
-                             ▼
-                    ┌────────────────┐
-                    │ autopsy-report │
-                    │     .md        │
-                    └────────┬───────┘
-                             │
-           ┌─────────────────┼─────────────────┐
-           │                                    │
-           ▼                                    ▼
-┌─────────────────────┐            ┌──────────────────────┐
-│ 🔎 mortem-           │            │ 🔮 merge-risk        │
-│    interrogator      │            │    (future PRs)      │
-│                      │            │                      │
-│ incident.md →        │            │ diff.txt →           │
-│ Five Whys →          │            │ cross-reference →    │
-│ reject excuses →     │            │ predict failures →   │
-│ systemic verdict     │            │ block repeats        │
-└──────────┬──────────┘            └──────────┬───────────┘
-           │                                    │
-           ▼                                    ▼
-  ┌──────────────────┐              ┌──────────────────┐
-  │ systemic-finding │              │   merge-risk     │
-  │      .md         │              │      .md         │
-  └──────────────────┘              └──────────────────┘
-```
-
-All three skills are powered by **Lyzr ADK** + **Google Gemini 2.5 Pro**, with local Python tools that give the agent real filesystem access to read code sets, run scans, and write reports live.
+- [What is this?](#-what-is-this)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Forensic Skills](#-forensic-skills)
+- [How It Works](#-how-it-works)
+- [Configuration](#-configuration)
+- [Built With](#-built-with)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Features
 
 <div align="center">
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| 🤖 **Agent Framework** | [Lyzr ADK](https://docs.lyzr.ai/lyzr-adk/overview) | Native agent creation, memory, tools, and RAI guardrails |
-| 🧠 **LLM** | [Gemini 2.5 Pro](https://aistudio.google.com) | Google's most capable model — free tier available |
-| 📐 **Agent Standard** | [GitAgent](https://gitagent.sh) | Git-native agent definition — version-controlled identity |
-| 🐍 **Runtime** | Python 3.10+ | Local tool execution for file I/O and security scanning |
+| Skill | What it does | Goal |
+|---|---|---|
+| `repo-autopsy` 🔬 | Scans codebase for security anti-patterns (regex speed) | Identify existing vulnerabilities |
+| `secret-scanner` 🔑 | Hunts hardcoded credentials & API keys | Prevent credentials in git history |
+| `dependency-audit` 📦 | Audits dependency posture & lockfiles | Evaluate supply-chain risk |
+| `compliance-check` 📋 | Audits project infrastructure & git hygiene | Enforce branch rules & CI presence |
+| `mortem-interrogator` 🔎 | Interrogates live bugs via GitHub API & Five Whys | Find the true systemic failure |
+| `merge-risk` 🔮 | Evaluates incoming PR diffs for regression risk | Guard against repeating past errors |
 
 </div>
 
@@ -101,165 +72,149 @@ All three skills are powered by **Lyzr ADK** + **Google Gemini 2.5 Pro**, with l
 ## 🚀 Quick Start
 
 ### Prerequisites
-
-- Python 3.10 or higher
-- A free [Lyzr API key](https://studio.lyzr.ai) (Community plan — no credit card)
+- Python 3.10+ / Node.js 18+
+- Git installed and in PATH
+- A free [Lyzr API key](https://studio.lyzr.ai)
 - A free [Gemini API key](https://aistudio.google.com)
 
-### 1. Clone the repo
+### Installation
 
 ```bash
+# 1. Clone the agent
 git clone https://github.com/VJsharan/causal-loop-agent.git
 cd causal-loop-agent
-```
 
-### 2. Install dependencies
-
-```bash
+# 2. Install Python dependencies (for Lyzr backend)
 pip install -r requirements.txt
+
+# 3. Add your API keys
+echo "LYZR_API_KEY=your_key_here" >> .env
+echo "GOOGLE_API_KEY=your_key_here" >> .env
+
+# 4. Run the interactive CLI (Node.js)
+node index.js
 ```
 
-### 3. Add your API keys
+At startup, you'll enter the fully interactive CLI. Press `[r]` to analyze any public GitHub URL on the fly, or just select a skill to scan the local `dummy_repo`.
 
-Open the `.env` file and replace the placeholders:
-
-```env
-LYZR_API_KEY=your_lyzr_api_key_here
-GOOGLE_API_KEY=your_gemini_api_key_here
-```
-
-### 4. Run the agent
+### Running the Pure Python Lyzr Backend
 
 ```bash
-python run_lyzr.py
-```
+# Run one specific skill on a public repo
+python run_lyzr.py --repo https://github.com/django/django --skill secrets
 
-That's it. CausalLoop will spin up, scan the dummy repo, interrogate the incident report, and write its findings to disk — all in under 60 seconds. ⚡
-
----
-
-## 🎯 Sample Output
-
-When you run the agent against the included `dummy_repo/auth.py`:
-
-```
-============================================================
-  CausalLoop — Forensic Systems Analyst
-  Powered by Lyzr ADK + Gemini 2.5 Pro
-============================================================
-
-🔬 PHASE 1: Scanning the Past (repo-autopsy)
---------------------------------------------------
-[CRITICAL] dummy_repo/auth.py:3 → Hardcoded admin credentials
-[CRITICAL] dummy_repo/auth.py:7 → eval() with unsanitized user input
-...
-
-🔎 PHASE 2: Investigating the Present (mortem-interrogator)
---------------------------------------------------
-REJECTED: "developer was rushing" is not a root cause.
-VERDICT: Absence of automated SAST in CI/CD pipeline...
-
-🔮 PHASE 3: Protecting the Future (merge-risk)
---------------------------------------------------
-ℹ️  No diff.txt found — stubbed for demo.
-
-============================================================
-  ✅ Demo Complete — All CausalLoop skills executed.
-============================================================
+# Run all 6 skills in sequence
+python run_lyzr.py --repo https://github.com/django/django --all
 ```
 
 ---
 
-## 🧬 Agent Identity
+## 🤖 Forensic Skills
 
-CausalLoop's personality is defined by two files that live in git:
-
-### `SOUL.md` — Who it is
-
-> A cross-temporal forensic analyst with the cynicism of someone who has watched the exact same class of failure recur across ten different organizations. It thinks in causal chains, not snapshots.
-
-### `RULES.md` — What it must always do
-
-| ✅ Must Always | ❌ Must Never |
-|---------------|--------------|
-| Trace every finding to a causal origin | Accept the proximate cause as the root cause |
-| Cite exact file paths, line numbers, or timeline entries | Generate findings without step-by-step explanations |
-| Distinguish past failures, present risks, and future predictions | Attribute failure to "human error" |
-| Issue systemic recommendations to prevent recurrence | Close an investigation without a fix recommendation |
+<div align="center">
+<table>
+<tr>
+<td align="center" width="33%"><a href="#-repo-autopsy"><img src="https://img.shields.io/badge/🔬_REPO_AUTOPSY-534AB7?style=for-the-badge&logoColor=EEEDFE"/></a><br/><sub>Scans the past codebase for fatal patterns</sub></td>
+<td align="center" width="33%"><a href="#-secret-scanner"><img src="https://img.shields.io/badge/🔑_SECRET_SCANNER-A32D2D?style=for-the-badge"/></a><br/><sub>Hunts credentials & active private keys</sub></td>
+<td align="center" width="33%"><a href="#-dependency-audit"><img src="https://img.shields.io/badge/📦_DEPENDENCY_AUDIT-0F6E56?style=for-the-badge"/></a><br/><sub>Validates supply-chain architecture</sub></td>
+</tr>
+<tr>
+<td align="center"><a href="#-compliance-check"><img src="https://img.shields.io/badge/📋_COMPLIANCE_CHECK-185FA5?style=for-the-badge"/></a><br/><sub>Audits institutional git hygiene</sub></td>
+<td align="center"><a href="#-mortem-interrogator"><img src="https://img.shields.io/badge/🔎_MORTEM_INTERROGATOR-993556?style=for-the-badge"/></a><br/><sub>Fetches GitHub issues & runs Five Whys</sub></td>
+<td align="center"><a href="#-merge-risk"><img src="https://img.shields.io/badge/🔮_MERGE_RISK-854F0B?style=for-the-badge"/></a><br/><sub>Pre-merge risk warnings on incoming diffs</sub></td>
+</tr>
+</table>
+</div>
 
 ---
 
-## 📂 Project Structure
+## 🏗️ How It Works
 
+```mermaid
+flowchart TD
+    START["🔗 CLI / Python Entry\nEnter GitHub URL or local path"]:::start
+
+    R1["📁 Local Repo"]:::git
+    R2["🌐 Public Repo\n(shallow clone depth=1)"]:::git
+
+    A["🧠 Agent Identity"]:::identity
+    A1["SOUL.md\nPersonality"]:::file
+    A2["RULES.md\nConstraints"]:::file
+
+    B["⚙️ Lyzr Core / Node Router\n(Dual Engine)"]:::runtime
+    C["⚡ Native Fast Grep\n(P0 priority capped)"]:::gitlog
+    D["🤖 Gemini 2.5 Pro\n(Lyzr ADK)"]:::llm
+    E["📡 GitHub REST API\n(Live Bug Polling)"]:::api
+
+    OUT["📺 Terminal Output\nDirectly streamed"]:::output
+
+    START --> R1 & R2
+    R1 & R2 --> C
+    A1 & A2 --> A
+    C --> B
+    E --> B
+    A --> B
+    B --> D
+    D --> OUT
+
+    classDef start fill:#064e3b,stroke:#10b981,color:#d1fae5
+    classDef identity fill:#1e1b4b,stroke:#6366f1,color:#e0e7ff
+    classDef file fill:#312e81,stroke:#818cf8,color:#c7d2fe
+    classDef runtime fill:#1e3a5f,stroke:#38bdf8,color:#e0f2fe
+    classDef git fill:#14532d,stroke:#4ade80,color:#dcfce7
+    classDef gitlog fill:#1a2e05,stroke:#84cc16,color:#ecfccb
+    classDef llm fill:#7c2d12,stroke:#fb923c,color:#ffedd5
+    classDef api fill:#581c87,stroke:#c084fc,color:#fae8ff
+    classDef output fill:#111827,stroke:#374151,color:#9ca3af
 ```
-causal-loop-agent/
-│
-├── 🤖 agent.yaml              # GitAgent manifest — model, skills, metadata
-├── 🧠 SOUL.md                 # Agent persona & personality definition
-├── 📏 RULES.md                # Behavioral constraints & investigation rules
-│
-├── 🐍 run_lyzr.py             # Main entry — Lyzr ADK + Gemini execution
-├── 📦 requirements.txt        # Python dependencies (lyzr-adk, python-dotenv)
-├── 🔑 .env                    # API keys (never committed)
-│
-├── 📁 dummy_repo/
-│   └── auth.py                # Intentionally flawed code for demo scanning
-│
-├── 📄 incident.md             # Sample incident report for Five Whys analysis
-│
-├── 📁 skills/
-│   ├── repo-autopsy/
-│   │   └── SKILL.md           # Instructions for codebase forensic scan
-│   ├── mortem-interrogator/
-│   │   └── SKILL.md           # Instructions for incident root cause analysis
-│   └── merge-risk/
-│       └── SKILL.md           # Instructions for pre-merge risk assessment
-│
-└── 📊 Generated Reports (after running)
-    ├── autopsy-report.md      # Forensic findings from code scan
-    ├── systemic-finding.md    # Root cause verdict from incident analysis
-    └── merge-risk.md          # Pre-merge risk warnings (when diff.txt exists)
-```
+
+1. **At startup**, choose to analyze the local codebase or input a public GitHub repository. The software executes a sub-3-second *ephemeral shallow clone*.
+2. **Context Assembly**: It intercepts live bugs from the GitHub API and uses `git grep -inE` inside a priority-bucket system (P0: keys, P1: vectors, P2: debt) to scan massive codebases safely.
+3. **Agent execution**: Powered by Gemini 2.5 Pro and Lyzr ADK, it runs a rigorous *Five Whys* interrogation and streams terminal output directly to you.
+4. **Clean up**: All temporary clone trails are strictly swept up after execution.
 
 ---
 
-## 🔑 Key Features
+## 🔧 Configuration
 
-- 🔍 **Real File System Access** — The agent reads, scans, and writes files on your actual machine via Lyzr's local tool execution
-- 🧠 **Conversational Memory** — Maintains context across all three skill phases so findings build on each other
-- 🛡️ **Rejection of "Human Error"** — Hardcoded as a rule: the agent must always dig deeper than blaming people
-- 📐 **Git-Native Identity** — Agent persona, rules, and skills are all version-controlled markdown files
-- ⚡ **Zero Cost** — Runs entirely on free tiers of Lyzr (Community) and Google Gemini
-
----
-
-## 🏗️ Built With
+### Environment Variables
 
 <div align="center">
 
-| | |
-|---|---|
-| ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) | Core runtime and local tools |
-| ![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge) | Agent framework with memory, tools, and guardrails |
-| ![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white) | LLM backbone for forensic reasoning |
-| ![Git](https://img.shields.io/badge/GitAgent-F05032?style=for-the-badge&logo=git&logoColor=white) | Open standard for agent definition |
+| Variable | Required | Description |
+|---|---|---|
+| `LYZR_API_KEY` | ✅ Yes | Your Lyzr ADK key - [get one free](https://studio.lyzr.ai) |
+| `GOOGLE_API_KEY` | ✅ Yes | Your Gemini API key for logic synthesis |
 
 </div>
 
 ---
 
-## 📜 License
-
-This project is open source under the [MIT License](LICENSE).
-
----
+## 🧩 Built With
 
 <div align="center">
 
-**Built for the Lyzr × GitAgent Hackathon**
+| Technology | Purpose |
+|:---:|:---|
+| [![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge)](https://docs.lyzr.ai/lyzr-adk/overview) | Agent persistence, routing, and guardrails |
+| [![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com) | LLM inference backend |
+| [![gitagent](https://img.shields.io/badge/gitagent-Standard-F97316?style=for-the-badge)](https://github.com/open-gitagent/gitagent) | Version-controlled AI personality definition |
+| [![Python/Node](https://img.shields.io/badge/Dual_Runtime-Python_&_Node-3B6D11?style=for-the-badge)](#) | Cross-language environment compatibility |
 
-*Stop blaming developers. Start fixing systems.*
+</div>
 
-🔬 → 🔎 → 🔮
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are highly welcome! Review the `RULES.md` file before submitting PRs—human error is still strictly prohibited.
+
+---
+
+## 📄 License
+
+<div align="center">
+
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 </div>
