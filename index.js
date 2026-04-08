@@ -309,20 +309,27 @@ function writeFile(filepath, content) {
 let tempDir = null;
 
 function cloneRepo(url) {
-  console.log(paint(`\n  Cloning ${url} …`, C.dim));
+  url = url.trim();
+  if (!url.startsWith("https://") && !url.startsWith("http://") && !url.startsWith("git@")) {
+    throw new Error(`Invalid URL '${url}'. Must start with https:// or git@`);
+  }
+  console.log(paint(`\n  ⚡ Shallow-cloning ${url} (depth=1, single-branch) …`, C.dim));
   tempDir = mkdtempSync(join(tmpdir(), "causalloop-"));
-  const result = spawnSync("git", ["clone", "--depth=50", url, tempDir], {
+  const result = spawnSync("git", ["clone", "--depth=1", "--single-branch", "--no-tags", url, tempDir], {
     encoding: "utf8",
     stdio: "pipe",
+    timeout: 20000,
   });
   if (result.status !== 0) {
     rmSync(tempDir, { recursive: true, force: true });
     tempDir = null;
-    console.error(paint(`❌  Clone failed: ${result.stderr}`, C.red));
-    process.exit(1);
+    const msg = result.error && result.error.code === "ETIMEDOUT" 
+      ? "Clone timed out after 20 seconds. Check network connectivity." 
+      : ((result.stderr || "") + (result.error ? " " + result.error.message : "")).trim() || "Unknown git error";
+    throw new Error(`Clone failed: ${msg}`);
   }
-  const name = url.split("/").pop().replace(".git", "");
-  console.log(paint(`  ✅ Cloned successfully. Analyzing: ${name}\n`, C.green));
+  const name = url.replace(/\/$/, "").split("/").pop().replace(".git", "");
+  console.log(paint(`  ✅ Clone complete. Target set to: ${name}\n`, C.green));
   return tempDir;
 }
 
@@ -643,6 +650,8 @@ function printMenu(targetDir) {
     paint("  [6]", C.cyan)    + "  " + paint(SKILLS["6"].label, C.bold),
     paint("  [7]", C.white)   + "  " + paint("⚡ full-investigation  — Run all 6 skills in sequence", C.bold),
     "",
+    paint("  [r]", C.yellow)  + "  " + paint("🚀 remote repo         — Target a remote public GitHub URL", C.bold),
+    "",
     paint("  [h]", C.dim) + "  help    " + paint("[q]", C.dim) + "  quit",
   ];
 
@@ -672,6 +681,18 @@ async function interactiveLoop(systemPrompt, targetDir) {
       console.log(paint("\n  Exiting CausalLoop. The loop is closed.\n", C.dim));
       rl.close();
       break;
+    }
+
+    if (choice === "r" || choice === "remote") {
+      const url = await ask(paint("  Enter public GitHub/GitLab URL> ", C.yellow));
+      if (!url.trim()) continue;
+      cleanup(); // remove previous clone if any
+      try {
+        targetDir = cloneRepo(url.trim());
+      } catch (err) {
+        console.error(paint(`  ❌ ${err.message}`, C.red));
+      }
+      continue;
     }
 
     if (choice === "7") {
@@ -727,7 +748,13 @@ async function main() {
   let targetDir = opts.target;
 
   if (opts.repo) {
-    targetDir = cloneRepo(opts.repo);
+    try {
+      targetDir = cloneRepo(opts.repo);
+    } catch(err) {
+      console.error(paint(`❌  ${err.message}`, C.red));
+      cleanup();
+      process.exit(1);
+    }
   }
 
   console.log(paint("  Loading agent identity (SOUL.md + RULES.md + skills)…", C.dim));
