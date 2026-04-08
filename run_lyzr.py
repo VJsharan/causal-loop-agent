@@ -92,21 +92,53 @@ def print_header() -> None:
 
 def print_menu(target_dir: str) -> None:
     """Print the interactive skill selection menu."""
-    lines = [
-        c(f"Target : {target_dir}", WHITE),
-        c(f"Engine  : Lyzr ADK + Gemini 2.5 Pro", DIM),
-        "",
-        c("[1]", GREEN) + c("  🔬 repo-autopsy       ", BOLD) + "— Scan codebase for security anti-patterns",
-        c("[2]", RED)   + c("  🔑 secret-scanner     ", BOLD) + "— Hunt hardcoded credentials & API keys",
-        c("[3]", YELLOW)+ c("  📦 dependency-audit   ", BOLD) + "— Audit dependency posture & lockfiles",
-        c("[4]", BLUE)  + c("  📋 compliance-check   ", BOLD) + "— Audit project infrastructure & git hygiene",
-        c("[5]", MAGENTA)+c("  🔎 mortem-interrogator", BOLD) + "— Five Whys root cause analysis",
-        c("[6]", CYAN)  + c("  🔮 merge-risk         ", BOLD) + "— Evaluate PR diff for regression risk",
-        c("[7]", WHITE) + c("  ⚡ full-investigation  ", BOLD) + "— Run all 6 skills in sequence",
-        "",
-        c("[h]", DIM)   + "  help    " + c("[q]", DIM) + "  quit",
+    # Repo info block
+    try:
+        branch = subprocess.run(
+            ["git", "-C", target_dir, "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True, text=True
+        ).stdout.strip() or "unknown"
+        commits = subprocess.run(
+            ["git", "-C", target_dir, "rev-list", "--count", "HEAD"],
+            capture_output=True, text=True
+        ).stdout.strip() or "?"
+    except Exception:
+        branch, commits = "unknown", "?"
+
+    repo_name = os.path.basename(os.path.abspath(target_dir))
+
+    info = [
+        c(f"  Repo    : {repo_name}", WHITE),
+        c(f"  Branch  : {branch}", WHITE),
+        c(f"  Commits : {commits}", WHITE),
+        c(f"  Engine  : Lyzr ADK + Gemini 2.5 Pro", DIM),
     ]
-    print(box("CausalLoop — Skill Selection", lines))
+    for line in info:
+        print(line)
+    print()
+
+    # Command table
+    CMD_W = 18
+    rows = [
+        ("autopsy",     GREEN,   "🔬", "Forensic scan for security anti-patterns"),
+        ("secrets",     RED,     "🔑", "Hunt hardcoded credentials & API keys"),
+        ("deps",        YELLOW,  "📦", "Audit dependency posture & lockfiles"),
+        ("compliance",  BLUE,    "📋", "Audit project infrastructure & git hygiene"),
+        ("interrogate", MAGENTA, "🔎", "Five Whys systemic root cause analysis"),
+        ("merge-risk",  CYAN,    "🔮", "Evaluate PR diff for regression risk"),
+        ("full",        WHITE,   "⚡", "Run all 6 skills in sequence"),
+        ("", DIM, "", ""),
+        ("help",        DIM,     "  ", "Show this menu"),
+        ("exit",        DIM,     "  ", "Quit"),
+    ]
+    print(c(f"  {'─' * 58}", DIM))
+    for cmd, colour, icon, desc in rows:
+        if not cmd:
+            print()
+            continue
+        pad = CMD_W - len(cmd)
+        print(f"  {c(cmd, colour, BOLD)}{' ' * pad}{c('->', DIM)}  {icon} {desc}")
+    print(c(f"  {'─' * 58}", DIM))
 
 
 def severity_badge(level: str) -> str:
@@ -453,8 +485,7 @@ Steps:
    - Cite the exact file path and line number
    - Assign a severity: CRITICAL, ELEVATED, or DEPRESSINGLY-PREDICTABLE
    - Write the full causal chain: what is wrong → why it exists → what systemic failure allows it
-5. Use `write_file` to save the complete forensic report to "{target_dir}/autopsy-report.md".
-   Format the report as markdown with clear sections per finding.
+5. Present your full forensic report directly in the response as formatted text. DO NOT write any files.
 6. End with a SYSTEMIC VERDICT: name the institutional failure pattern, not the individual developer.
 """
     response = agent.run(prompt)
@@ -478,7 +509,7 @@ Steps:
    - State the file path and line number
    - MASK the actual credential value — never output it. Use [REDACTED] for values over 4 chars.
    - Explain the causal chain: developer shortcut → no pre-commit hook → credential in git history forever
-4. Use `write_file` to save the Secret Scan Report to "{target_dir}/secret-scan-report.md".
+4. Present your full Secret Scan Report directly in the response. DO NOT write any files.
 5. State whether this is an isolated incident or reflects a systemic secret management failure.
 
 CRITICAL: You MUST NEVER output the actual credential value. Only its location, type, and classification.
@@ -506,7 +537,7 @@ Steps:
    c) Are dev dependencies separated from production dependencies?
    d) Flag any known historically vulnerable package names.
 4. Assign a RISK RATING: CRITICAL / ELEVATED / GUARDED / LOW
-5. Use `write_file` to save the Dependency Audit Report to "{target_dir}/dependency-audit-report.md".
+5. Present your full Dependency Audit Report directly in the response. DO NOT write any files.
 6. The SYSTEMIC VERDICT must identify whether this reflects a team-wide process failure.
 """
     response = agent.run(prompt)
@@ -538,7 +569,7 @@ Steps:
    - Look for merge conflict markers: <<<<<<, =======, >>>>>>>
 5. If README.md exists, use `read_file` to read it — check it has: description, install, usage.
 6. Assign an Infrastructure Score from 0 to 10.
-7. Use `write_file` to save the Compliance Report to "{target_dir}/compliance-report.md".
+7. Present your full Compliance Report directly in the response. DO NOT write any files.
 """
     response = agent.run(prompt)
     return response.response
@@ -603,7 +634,7 @@ Steps:
 5. Issue a systemic recommendation that, if implemented, would make this class
    of failure structurally impossible — not just unlikely.
 
-6. Use `write_file` to save your verdict to "{target_dir}/systemic-finding.md".
+6. Present your full systemic verdict directly in the response. DO NOT write any files.
 """
     response = agent.run(prompt)
     return response.response
@@ -632,8 +663,8 @@ Execute the merge-risk skill.
 
 Steps:
 1. Use `read_file` to read the diff at: "{diff_path}"
-2. Use `read_file` to read the autopsy report (if it exists) at: "{target_dir}/autopsy-report.md"
-3. Use `read_file` to read the systemic finding (if it exists) at: "{target_dir}/systemic-finding.md"
+2. If it exists, use `read_file` to read the autopsy report at: "{target_dir}/autopsy-report.md"
+3. If it exists, use `read_file` to read the systemic finding at: "{target_dir}/systemic-finding.md"
 
 4. Cross-reference the diff against known findings:
    - Do the changed files include any that previously had CRITICAL findings?
@@ -646,7 +677,7 @@ Steps:
    - CAUTION: New code follows patterns that correlate with past debt accumulation
    - CLEAR: No regression risk detected
 
-6. Use `write_file` to save the Merge Risk Assessment to "{target_dir}/merge-risk-report.md".
+6. Present your full Merge Risk Assessment directly in the response. DO NOT write any files.
 7. The verdict must state: APPROVE / WARN / BLOCK — and the causal justification.
 """
     response = agent.run(prompt)
@@ -688,40 +719,47 @@ def save_to_memory(target: str, skills_run: list[str], timestamp: str) -> None:
 #  Skill dispatcher
 # ──────────────────────────────────────────────────────────────────────
 
-SKILL_MAP: dict[str, tuple[str, callable]] = {
-    "1": ("repo-autopsy",        run_skill_repo_autopsy),
-    "2": ("secret-scanner",      run_skill_secret_scanner),
-    "3": ("dependency-audit",    run_skill_dependency_audit),
-    "4": ("compliance-check",    run_skill_compliance_check),
-    "5": ("mortem-interrogator", run_skill_mortem_interrogator),
-    "6": ("merge-risk",          run_skill_merge_risk),
+# Maps every legal command → (canonical-name, runner-fn)
+SKILL_MAP: dict[str, tuple[str, object]] = {
+    "autopsy":       ("repo-autopsy",        run_skill_repo_autopsy),
+    "repo-autopsy":  ("repo-autopsy",        run_skill_repo_autopsy),
+    "secrets":       ("secret-scanner",      run_skill_secret_scanner),
+    "secret-scanner":("secret-scanner",      run_skill_secret_scanner),
+    "deps":          ("dependency-audit",    run_skill_dependency_audit),
+    "dependency-audit":("dependency-audit",  run_skill_dependency_audit),
+    "compliance":    ("compliance-check",    run_skill_compliance_check),
+    "compliance-check":("compliance-check",  run_skill_compliance_check),
+    "interrogate":   ("mortem-interrogator", run_skill_mortem_interrogator),
+    "mortem-interrogator":("mortem-interrogator", run_skill_mortem_interrogator),
+    "merge-risk":    ("merge-risk",          run_skill_merge_risk),
 }
 
+# For --skill argparse choices
 SKILL_NAME_MAP: dict[str, str] = {
-    "repo-autopsy":        "1",
-    "secret-scanner":      "2",
-    "dependency-audit":    "3",
-    "compliance-check":    "4",
-    "mortem-interrogator": "5",
-    "merge-risk":          "6",
+    "repo-autopsy":        "autopsy",
+    "secret-scanner":      "secrets",
+    "dependency-audit":    "deps",
+    "compliance-check":    "compliance",
+    "mortem-interrogator": "interrogate",
+    "merge-risk":          "merge-risk",
 }
 
 
 def dispatch_skill(choice: str, agent: object, target_dir: str) -> Optional[str]:
-    """Run a single skill by its menu key or name. Returns the response text."""
-    key = SKILL_NAME_MAP.get(choice, choice)
-    if key not in SKILL_MAP:
-        print(c(f"  ❌  Unknown skill: '{choice}'", RED))
+    """Run a single skill by its command name. Returns the response text."""
+    entry = SKILL_MAP.get(choice.lower())
+    if not entry:
+        print(c(f"  ❌  Unknown command: '{choice}'. Type 'help' to see available commands.", RED))
         return None
-    _name, runner = SKILL_MAP[key]
+    _name, runner = entry
     return runner(agent, target_dir)
 
 
 def run_all_skills(agent: object, target_dir: str) -> list[str]:
     """Run all 6 skills in sequence."""
     results: list[str] = []
-    for key in ("1", "2", "3", "4", "5", "6"):
-        name, runner = SKILL_MAP[key]
+    for key in ("autopsy", "secrets", "deps", "compliance", "interrogate", "merge-risk"):
+        _name, runner = SKILL_MAP[key]
         result = runner(agent, target_dir)
         results.append(result)
     return results
@@ -735,9 +773,10 @@ def interactive_loop(agent: object, target_dir: str) -> None:
     """Main interactive command loop."""
     skills_run: list[str] = []
 
+    print()
+    print_menu(target_dir)
+
     while True:
-        print()
-        print_menu(target_dir)
         try:
             choice = input(c("\nCausalLoop> ", CYAN, BOLD)).strip().lower()
         except (KeyboardInterrupt, EOFError):
@@ -748,10 +787,15 @@ def interactive_loop(agent: object, target_dir: str) -> None:
             print(c("\n  Exiting CausalLoop. The loop is closed.\n", DIM))
             break
 
-        if choice in ("h", "help", ""):
+        if choice in ("h", "help"):
+            print()
+            print_menu(target_dir)
             continue
 
-        if choice == "7":
+        if choice == "":
+            continue
+
+        if choice == "full":
             print(c("\n  ⚡ Running full investigation — all 6 skills...", MAGENTA, BOLD))
             run_all_skills(agent, target_dir)
             skills_run.extend(["repo-autopsy", "secret-scanner", "dependency-audit",
@@ -761,9 +805,9 @@ def interactive_loop(agent: object, target_dir: str) -> None:
 
         result = dispatch_skill(choice, agent, target_dir)
         if result:
-            name = SKILL_MAP.get(SKILL_NAME_MAP.get(choice, choice), (choice,))[0]
+            name = SKILL_MAP.get(choice, (choice,))[0]
             skills_run.append(name)
-            print(c(f"\n  ✅ Skill '{name}' complete.", GREEN))
+            print(c(f"\n  ✅ Done.", GREEN))
 
     # Persist session to memory
     save_to_memory(target_dir, skills_run, datetime.utcnow().isoformat() + "Z")
@@ -795,8 +839,8 @@ Examples:
     parser.add_argument(
         "--skill",
         metavar="SKILL",
-        choices=list(SKILL_NAME_MAP.keys()),
-        help="Run a single specific skill and exit",
+        choices=list(SKILL_MAP.keys()),
+        help="Run a single specific skill and exit (e.g. autopsy, secrets, deps, compliance, interrogate, merge-risk)",
     )
     parser.add_argument(
         "--all",
@@ -844,7 +888,7 @@ Examples:
             run_all_skills(agent, target_dir)
             save_to_memory(
                 target_dir,
-                list(SKILL_NAME_MAP.keys()),
+                list(SKILL_MAP.keys()),
                 datetime.utcnow().isoformat() + "Z"
             )
             print(c("\n  ✅ Full investigation complete.", GREEN, BOLD))
