@@ -101,6 +101,7 @@ if (!GOOGLE_API_KEY || GOOGLE_API_KEY.startsWith("your_")) {
 
 const genAI  = new GoogleGenerativeAI(GOOGLE_API_KEY);
 const MODELS = [
+  "gemini-3.1-flash-lite-preview",
   "gemini-2.5-pro",
   "gemini-2.5-flash",
   "gemini-2.0-flash",
@@ -621,7 +622,7 @@ const SKILL_BY_NAME = Object.fromEntries(
 );
 
 function printMenu(targetDir) {
-  const inner = 60;
+  const inner = 90;
   const div = "─".repeat(inner);
   console.log(`\n${paint("┌" + div + "┐", C.cyan)}`);
   const title = " CausalLoop — Skill Selection ";
