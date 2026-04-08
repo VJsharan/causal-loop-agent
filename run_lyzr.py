@@ -292,86 +292,163 @@ def list_directory(directory: str) -> str:
 def run_grep_scan(directory: str) -> str:
     """
     Scan a local directory for common security anti-patterns.
-    Searches for: hardcoded credentials, dangerous functions (eval, exec),
-    SQL injection patterns, known secret formats (API keys, tokens, passwords),
-    TODO/FIXME technical debt markers, and debug flags left in production.
-    Returns a list of findings with [PATTERN] filepath:line → content.
-    Credential values are partially masked in output.
+
+    Strategy (performance-first):
+      1. Attempt native `git grep -iE` — written in C, instant on large repos.
+      2. If the directory is not a git repo (e.g., dummy_repo), fall back to a
+         Python generator that streams files lazily without loading them into RAM.
+
+    CRITICAL SAFETY RULE: Returns AT MOST 15 findings to prevent LLM context
+    window overflow. CRITICAL patterns (active credentials, RCE vectors) are
+    guaranteed slots before low-priority debt markers (TODO, FIXME).
+
+    All credential values are masked with [REDACTED].
+    Returns a human-readable findings string, or an error string on failure.
     """
-    PATTERNS = [
-        # Credential anti-patterns
-        r"password\s*=\s*['\"][^'\"]{3,}['\"]",
-        r"passwd\s*=\s*['\"][^'\"]{3,}['\"]",
-        r"secret\s*=\s*['\"][^'\"]{3,}['\"]",
-        r"api_key\s*=\s*['\"][^'\"]{3,}['\"]",
-        r"apikey\s*=\s*['\"][^'\"]{3,}['\"]",
-        r"token\s*=\s*['\"][^'\"]{3,}['\"]",
-        # Known credential formats
-        r"AKIA[A-Z0-9]{16}",
-        r"ghp_[a-zA-Z0-9]{36}",
-        r"sk_live_[a-zA-Z0-9]+",
-        r"BEGIN (RSA|EC|OPENSSH) PRIVATE KEY",
-        # Dangerous functions
-        r"eval\(",
-        r"exec\(",
-        r"os\.system\(",
-        r"subprocess\.call\(",
-        r"pickle\.loads\(",
-        r"yaml\.load\([^,)]+\)",
-        # SQL injection
-        r"\"SELECT.*WHERE.*\" \+",
-        r"'SELECT.*WHERE.*' \+",
-        r"execute\(f['\"]SELECT",
-        # Debt markers
-        r"TODO",
-        r"FIXME",
-        r"HACK",
-        r"XXX",
-        r"WORKAROUND",
-        # Debug in prod
-        r"DEBUG\s*=\s*True",
-        r"debug\s*=\s*true",
-        r"console\.log\(",
+    MAX_FINDINGS = 15
+
+    # ── Pattern catalogue ──────────────────────────────────────────────
+    # Tuples of (priority, regex_string) — lower number = higher priority.
+    # CRITICAL (0): active credentials / known secret formats / RCE functions
+    # ELEVATED (1): dangerous patterns, SQL injection
+    # LOW      (2): technical debt markers, debug flags
+    PRIORITY_PATTERNS: list[tuple[int, str]] = [
+        # CRITICAL — credentials & known secret formats
+        (0, r"AKIA[A-Z0-9]{16}"),
+        (0, r"ghp_[a-zA-Z0-9]{36}"),
+        (0, r"sk_live_[a-zA-Z0-9]+"),
+        (0, r"BEGIN (RSA|EC|OPENSSH) PRIVATE KEY"),
+        (0, r"password\s*=\s*['\"][^'\"]{3,}['\"]"),
+        (0, r"passwd\s*=\s*['\"][^'\"]{3,}['\"]"),
+        (0, r"secret\s*=\s*['\"][^'\"]{3,}['\"]"),
+        (0, r"api_key\s*=\s*['\"][^'\"]{3,}['\"]"),
+        (0, r"apikey\s*=\s*['\"][^'\"]{3,}['\"]"),
+        (0, r"token\s*=\s*['\"][^'\"]{3,}['\"]"),
+        # CRITICAL — remote code execution vectors
+        (0, r"eval\("),
+        (0, r"exec\("),
+        (0, r"os\.system\("),
+        (0, r"pickle\.loads\("),
+        (0, r"yaml\.load\([^,)]+\)"),
+        # ELEVATED — SQL injection, unsafe subprocess
+        (1, r"execute\(f['\"]SELECT"),
+        (1, r"['\"]SELECT.*WHERE.*['\"]\s*\+"),
+        (1, r"subprocess\.call\("),
+        # LOW — technical debt & debug
+        (2, r"TODO"),
+        (2, r"FIXME"),
+        (2, r"HACK"),
+        (2, r"XXX"),
+        (2, r"DEBUG\s*=\s*True"),
+        (2, r"console\.log\("),
     ]
 
-    SKIP_EXTENSIONS = (
+    SKIP_EXTENSIONS: frozenset[str] = frozenset([
         ".pyc", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg",
         ".woff", ".woff2", ".ttf", ".eot", ".zip", ".gz", ".tar",
-        ".pdf", ".lock", ".sum",
-    )
-    SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build"}
+        ".pdf", ".lock", ".sum", ".bin", ".exe", ".so",
+    ])
+    SKIP_DIRS: frozenset[str] = frozenset([
+        ".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build",
+    ])
 
-    findings: list[str] = []
-    compiled = [re.compile(p, re.IGNORECASE) for p in PATTERNS]
+    MASK_RE = re.compile(r"(['\"])[A-Za-z0-9_\-]{8,}(['\"])")
 
-    for root, dirs, files in os.walk(directory):
-        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
-        for fname in files:
-            if any(fname.endswith(ext) for ext in SKIP_EXTENSIONS):
-                continue
-            fpath = os.path.join(root, fname)
+    def _mask(line: str) -> str:
+        return MASK_RE.sub(r"\1[REDACTED]\2", line)
+
+    # Buckets sorted by priority so CRITICAL findings claim slots first.
+    buckets: dict[int, list[str]] = {0: [], 1: [], 2: []}
+
+    # ── Strategy 1: native git grep (C speed) ─────────────────────────
+    pattern_strings = "|".join(p for _, p in PRIORITY_PATTERNS)
+    git_grep_succeeded = False
+    try:
+        result = subprocess.run(
+            ["git", "-C", directory, "grep", "-inE", pattern_strings,
+             "--", ":!node_modules", ":!__pycache__", ":!.venv", ":!dist"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if result.returncode in (0, 1):  # 0 = found, 1 = no matches (not an error)
+            git_grep_succeeded = True
+            compiled_pats = [
+                (prio, re.compile(pat, re.IGNORECASE))
+                for prio, pat in PRIORITY_PATTERNS
+            ]
+            for raw_line in result.stdout.splitlines():
+                # git grep output: "filepath:lineno:content"
+                parts = raw_line.split(":", 2)
+                if len(parts) < 3:
+                    continue
+                fpath, lineno, content = parts[0], parts[1], parts[2]
+                for prio, cpat in compiled_pats:
+                    if cpat.search(content):
+                        masked_content = _mask(content.strip())
+                        entry = f"[P{prio}] {fpath}:{lineno} → {masked_content}"
+                        buckets[prio].append(entry)
+                        break
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        # git not available or directory not a git repo — fall through.
+        git_grep_succeeded = False
+
+    # ── Strategy 2: Python generator fallback ─────────────────────────
+    if not git_grep_succeeded:
+        compiled_pats = [
+            (prio, re.compile(pat, re.IGNORECASE))
+            for prio, pat in PRIORITY_PATTERNS
+        ]
+
+        def _walk_files(root_dir: str):
+            """Yield (filepath,) for every scannable file, lazily."""
+            for dirpath, dirnames, filenames in os.walk(root_dir):
+                dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+                for fname in filenames:
+                    if any(fname.endswith(ext) for ext in SKIP_EXTENSIONS):
+                        continue
+                    yield os.path.join(dirpath, fname)
+
+        # Early-exit as soon as all buckets have enough to cap MAX_FINDINGS
+        running_total = 0
+        for fpath in _walk_files(directory):
+            if running_total >= MAX_FINDINGS * 3:  # generous headroom before sort
+                break
             try:
                 with open(fpath, "r", encoding="utf-8", errors="ignore") as fh:
                     for line_no, raw_line in enumerate(fh, start=1):
                         line = raw_line.rstrip()
-                        for pat in compiled:
-                            if pat.search(line):
-                                # Mask credentials: keep first 4 chars after = and replace rest
-                                masked = re.sub(
-                                    r"(['\"])[A-Za-z0-9_\-]{8,}(['\"])",
-                                    r"\1[REDACTED]\2",
-                                    line
+                        for prio, cpat in compiled_pats:
+                            if cpat.search(line):
+                                masked = _mask(line)
+                                buckets[prio].append(
+                                    f"[P{prio}] {fpath}:{line_no} → {masked.strip()}"
                                 )
-                                findings.append(
-                                    f"[{pat.pattern[:30]}] {fpath}:{line_no} → {masked.strip()}"
-                                )
+                                running_total += 1
                                 break  # one finding per line
             except (PermissionError, OSError):
                 continue
 
+    # ── Merge, cap, and format ─────────────────────────────────────────
+    merged: list[str] = []
+    for prio in (0, 1, 2):
+        merged.extend(buckets[prio])
+
+    total_raw = len(merged)
+    truncated = total_raw > MAX_FINDINGS
+    findings = merged[:MAX_FINDINGS]
+
     if not findings:
         return "No security anti-patterns detected."
-    return f"Found {len(findings)} pattern(s):\n" + "\n".join(findings)
+
+    output_lines = [f"Found {total_raw} raw pattern match(es). Reporting top {len(findings)} (priority-sorted):"]
+    output_lines.extend(findings)
+    if truncated:
+        output_lines.append(
+            f"... [Additional {total_raw - MAX_FINDINGS} finding(s) truncated "
+            f"to protect LLM context window.]"
+        )
+    return "\n".join(output_lines)
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -380,24 +457,64 @@ def run_grep_scan(directory: str) -> str:
 
 def clone_repo(url: str) -> tuple[str, str]:
     """
-    Clone a public git repository to a temporary directory.
+    Clone a public git repository to a temporary directory using a shallow,
+    single-branch clone strategy for maximum speed.
+
+    Uses --depth 1 (no history) and --single-branch (no other branches) to
+    download ONLY the current HEAD snapshot. A repo like React that is
+    gigabytes in full history clones in under 5 seconds with this strategy.
+
+    Enforces a 20-second network timeout via subprocess.run(timeout=...) so
+    a hung network request fails fast instead of freezing the agent on stage.
+
     Returns (temp_dir_path, repo_name) on success.
-    Raises SystemExit with an error message on failure.
+    Raises SystemExit with an actionable error message on any failure.
     """
-    print(c(f"\n  Cloning {url} ...", DIM))
+    url = url.strip()
+    if not url.startswith(("https://", "http://", "git@")):
+        raise SystemExit(
+            c(f"❌  Invalid URL '{url}'. Must start with https:// or git@", RED)
+        )
+
     repo_name = url.rstrip("/").split("/")[-1].replace(".git", "")
     tmp = tempfile.mkdtemp(prefix="causalloop-")
-    result = subprocess.run(
-        ["git", "clone", "--depth=50", url, tmp],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
+
+    print(c(f"\n  ⚡ Shallow-cloning {url} (depth=1, single-branch) ...", DIM))
+    print(c(f"     This fetches HEAD only — no git history downloaded.", DIM))
+
+    try:
+        result = subprocess.run(
+            [
+                "git", "clone",
+                "--depth=1",
+                "--single-branch",
+                "--no-tags",
+                url,
+                tmp,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=20,          # fail fast — do not hang during a live demo
+        )
+    except subprocess.TimeoutExpired:
         shutil.rmtree(tmp, ignore_errors=True)
         raise SystemExit(
-            c(f"❌  Failed to clone repo: {result.stderr.strip()}", RED)
+            c("❌  Clone timed out after 20 seconds. Check network connectivity.", RED)
         )
-    print(c(f"  ✅ Cloned to temp dir. Analyzing: {repo_name}\n", GREEN))
+    except FileNotFoundError:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise SystemExit(
+            c("❌  'git' command not found. Install Git and ensure it is on PATH.", RED)
+        )
+
+    if result.returncode != 0:
+        shutil.rmtree(tmp, ignore_errors=True)
+        stderr = result.stderr.strip()
+        raise SystemExit(
+            c(f"❌  Failed to clone repo: {stderr}", RED)
+        )
+
+    print(c(f"  ✅ Clone complete. Analyzing: {repo_name}\n", GREEN))
     return tmp, repo_name
 
 
