@@ -1,0 +1,23 @@
+# Environments
+.env
+
+# Cache and build
+node_modules/
+__pycache__/
+*.pyc
+
+# Local git and IDE
+.git/
+.vscode/
+
+# Local testing output reports
+autopsy-report.md
+systemic-finding.md
+merge-risk.md
+incident.md
+diff.txt
+
+# Do not ignore assets or dummy repo as they might be needed for tests/examples,
+# but we can ignore dummy_repo if it's strictly local. Actually, I will ignore dummy_repo 
+# to keep the npm package small since process.cwd() is the default now.
+dummy_repo/

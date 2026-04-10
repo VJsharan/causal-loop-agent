@@ -171,40 +171,39 @@ Looks at newly proposed edits to ensure you don't repeat the errors found in the
 
 ## ⚡ Installation Guide
 
-### What You Need First
-- Node.js (Version 18 or higher) for the interactive menu.
-- Python (Version 3.10 or higher) for the advanced AI scripts.
-- Free API keys from [Lyzr](https://studio.lyzr.ai) and [Google Gemini](https://aistudio.google.com).
+CausalLoop is available as a global CLI tool on npm.
 
-### Step-by-Step Setup
-
+### Quick Install
 ```bash
-# 1. Download the tool
-git clone https://github.com/VJsharan/causal-loop-agent.git
-cd causal-loop-agent
-
-# 2. Install the necessary packages
-pip install -r requirements.txt
-npm install
-
-# 3. Add your passwords/keys privately
-echo "LYZR_API_KEY=your_key_here" >> .env
-echo "GOOGLE_API_KEY=your_key_here" >> .env
+npm install -g @vjsharan/causal-loop-agent
 ```
 
-### How to Run It
-
-If you want the easy, visual list of options, just run:
-
+### Setup & Run
 ```bash
-node index.js
-```
-*Tip: Press `[r]` at the prompt to analyze a live site like React or Django!*
+# 1. Go to any project folder on your machine
+cd your-project
 
-If you want to use the standard framework command instead:
+# 2. Create a .env file containing your free Gemini API key
+echo "GOOGLE_API_KEY=your_key_here" > .env
+
+# 3. Run the interactive investigator
+causalloop
+```
+*No cloning needed. Install once, use in any repo.*
+
+### Option B: gitclaw Runtime Execution
+If you prefer to use the gitagent SDK standard execution:
 ```bash
 npm install -g gitclaw
 gitclaw --dir . --model gemini-2.5-pro "scan this repository for hardcoded secrets"
+```
+
+### Option C: Python Standalone Execution
+For pure Python inference (requires cloning the repo):
+```bash
+git clone https://github.com/VJsharan/causal-loop-agent.git
+pip install -r requirements.txt
+python run_lyzr.py --repo "https://github.com/facebook/react" --all
 ```
 
 ---

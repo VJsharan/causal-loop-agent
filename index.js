@@ -724,7 +724,7 @@ function parseArgs() {
     repo:   null,
     skill:  null,
     all:    false,
-    target: join(__dirname, "dummy_repo"),
+    target: process.cwd(),
   };
 
   for (let i = 0; i < args.length; i++) {
