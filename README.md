@@ -32,14 +32,18 @@
 
 <br/>
 
-</div>
+<br/>
+
+<p align="center">
+  <img src="assets/coverimage.png" alt="CausalLoop Cover" width="100%" />
+</p>
 
 ---
 
 ## 🗂️ Table of Contents
 
 - [What is CausalLoop?](#-what-is-causalloop)
-- [How It Works](#-how-it-works)
+- [Live Demo](#-live-demo)
 - [Agent Features](#-agent-features)
 - [Live Tools Suite](#-live-tools-suite)
 - [Interactive Previews](#-interactive-previews)
@@ -115,6 +119,18 @@ To execute its investigations autonomously, CausalLoop is equipped with 6 custom
 - `read-file.yaml` — Ingests application code directly from the filesystem.
 - `write-file.yaml` — Generates permanent Markdown reports of findings.
 - `run-command.yaml` — Executes static analysis testing natively.
+
+---
+
+## 🎬 Live Demo
+
+<div align="center">
+  <a href="https://youtube.com/your-video-link-here">
+    <img src="https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg" alt="Watch the Demo" width="100%" />
+  </a>
+  <br/>
+  <em>Click above to watch the full hackathon demonstration (Replace link & ID)!</em>
+</div>
 
 ---
 
@@ -227,6 +243,10 @@ python run_lyzr.py --repo "https://github.com/facebook/react" --all
 ---
 
 ## 🏛️ Architecture Flow
+
+<p align="center">
+  <img src="assets/geminiimage.png" alt="Powered by Google Gemini" width="100%" />
+</p>
 
 This map shows how CausalLoop gathers data, thinks about it, and delivers reports.
 
