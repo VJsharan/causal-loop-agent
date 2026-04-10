@@ -35,7 +35,7 @@
 <br/>
 
 <p align="center">
-  <img src="assets/coverimage.png" alt="CausalLoop Cover" width="100%" />
+  <img src="assets/finalcoverimage.png" alt="CausalLoop Cover" width="100%" />
 </p>
 
 ---
