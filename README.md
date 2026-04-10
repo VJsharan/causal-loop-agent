@@ -197,6 +197,8 @@ causalloop
 > [!TIP]
 > **No cloning needed.** Install once, use in any repository globally.
 
+👉 [View on NPM Registry](https://www.npmjs.com/package/@vjsharan/causal-loop-agent)
+
 ---
 
 ### 🛡️ Alternative: gitclaw Runtime
