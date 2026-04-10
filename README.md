@@ -27,7 +27,7 @@
 
 ---
 
-## 🧠 What is this?
+## 🧠 What Causal-Loop actually is?
 
 `CausalLoop` is a cross-temporal forensic AI agent that **lives inside your terminal**—defined using the [gitagent open standard](https://github.com/open-gitagent/gitagent). It reads your codebase, analyzes past git history, and scrutinizes open GitHub issues to turn raw structural failures into systemic institutional verdicts.
 
@@ -39,7 +39,7 @@
 
 ## 📚 Table of Contents
 
-- [What is this?](#-what-is-this)
+- [What Causal Loop Acual?](#-what-is-this)
 - [Features](#-features)
 - [Demo](#-demo)
 - [Screenshots](#-screenshots)
@@ -90,49 +90,56 @@
 At startup, you can point CausalLoop at any local dummy repo, or pass any `https://github.com/` URL. It automatically shallow-clones the remote codebase instantly, locking it in as your analysis target.
 
 <p align="center">
-  <img src="assets/welcome.png" alt="Welcome Screen & CLI Menu" width="100%" onerror="this.onerror=null; this.src='https://placehold.co/800x200/0f172a/38bdf8/png?text=[r]+remote+repo+—+Target+a+remote+public+GitHub+URL'" />
+  <img src="assets/causal_IMAGE1.png" alt="Welcome Screen & CLI Menu" width="100%" />
+</p>
+
+### 🛠️ Interactive Features Menu
+The intuitive Node.js CLI allows you to execute individual forensic skills or run an end-to-end investigation sequence.
+
+<p align="center">
+  <img src="assets/features_offered.png" alt="Features Menu" width="100%" />
 </p>
 
 ### 🔬 1. Repo Autopsy
 Scans the legacy codebase for security vulnerabilities, evaluating logical flows for bad patterns like un-sanitized inputs.
 
 <p align="center">
-  <img src="assets/repo-autopsy.png" alt="Repo Autopsy Scanning" width="100%" onerror="this.onerror=null; this.src='https://placehold.co/800x200/0f172a/534ab7/png?text=Repo+Autopsy+Scan'" />
+  <img src="assets/repoautopsy.png" alt="Repo Autopsy Scanning" width="100%" />
 </p>
 
 ### 🔑 2. Secret Scanner
 Hunts for hardcoded credentials, API keys, and active private keys within all local configurations.
 
 <p align="center">
-  <img src="assets/secret-scanner.png" alt="Secret Scanner Output" width="100%" onerror="this.onerror=null; this.src='https://placehold.co/800x200/0f172a/a32d2d/png?text=Secret+Scanner+Results'" />
+  <img src="assets/secret-scanner.png" alt="Secret Scanner Output" width="100%" />
 </p>
 
 ### 📦 3. Dependency Audit
 Validates supply-chain architecture, identifying outdated logic or insecure sub-modules inside package managers.
 
 <p align="center">
-  <img src="assets/dependency-audit.png" alt="Dependency Audit Checking" width="100%" onerror="this.onerror=null; this.src='https://placehold.co/800x200/0f172a/0f6e56/png?text=Dependency+Audit+Output'" />
+  <img src="assets/dependency-audit.png" alt="Dependency Audit Checking" width="100%" />
 </p>
 
 ### 📋 4. Compliance Check
 Audits institutional git hygiene, ensuring `CONTRIBUTING.md`, `SECURITY.md`, and strict CI/CD pipelines are properly established.
 
 <p align="center">
-  <img src="assets/compliance-check.png" alt="Compliance Checking" width="100%" onerror="this.onerror=null; this.src='https://placehold.co/800x200/0f172a/185fa5/png?text=Compliance+Check+Verification'" />
+  <img src="assets/compliance-check.png" alt="Compliance Checking" width="100%" />
 </p>
 
 ### 🔎 5. Mortem Interrogator
 Watch it reject shallow reasoning. By querying the live GitHub API for a real project, it extracts the most recent issue and drills down into the precise absence of structural guardrails.
 
 <p align="center">
-  <img src="assets/mortem-interrogator.png" alt="Mortem Interrogator Analysis" width="100%" onerror="this.onerror=null; this.src='https://placehold.co/800x300/0f172a/f43f5e/png?text=REJECTED:+Human+Error.+VERDICT:+Absence+of+Automated+SAST'" />
+  <img src="assets/mortem-interrogator.png" alt="Mortem Interrogator Analysis" width="100%" />
 </p>
 
 ### 🔮 6. Merge Risk
 Generates pre-merge warnings on incoming Pull Request `diff` changes so that catastrophic logic is never duplicated.
 
 <p align="center">
-  <img src="assets/merge-risk.png" alt="Merge Risk Profiling" width="100%" onerror="this.onerror=null; this.src='https://placehold.co/800x200/0f172a/854f0b/png?text=Pre-Merge+Risk+Assessment'" />
+  <img src="assets/merge-risk.png" alt="Merge Risk Profiling" width="100%" />
 </p>
 
 ---
