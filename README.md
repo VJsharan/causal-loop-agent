@@ -60,7 +60,7 @@ It works across three timeframes:
 
 ## 🌟 Agent Features
 
-Here is what the CausalLoop agent can do automatically for your project:
+Here is what the CausalLoop agent can do automatically for your project. All investigations stream their analysis instantly into your CLI, but also **generate a rigorous `.md` markdown report saved directly to your filesystem**, allowing your team to safely persist and reference the exact findings later.
 
 <div align="center">
 
@@ -95,6 +95,17 @@ CausalLoop operates with 6 distinct tool commands that you can execute at any ti
 </tr>
 </table>
 </div>
+
+### 🔧 Native Tool Integrations
+
+To execute its investigations autonomously, CausalLoop is equipped with 6 custom GitAgent-compliant capabilities defined securely inside the `tools/` directory:
+
+- `fetch-github-issues.yaml` — Pulls live production bugs straight from the GitHub API.
+- `run-grep-scan.yaml` — Invokes ultra-fast C-based grep to search thousands of lines instantly.
+- `list-directory.yaml` — Maps out repository architecture natively.
+- `read-file.yaml` — Ingests application code directly from the filesystem.
+- `write-file.yaml` — Generates permanent Markdown reports of findings.
+- `run-command.yaml` — Executes static analysis testing natively.
 
 ---
 
@@ -251,10 +262,13 @@ graph TD
 
 ## 🧩 Agent Identity Profile
 
-CausalLoop operates based on two strict rule files that it will never disobey:
+CausalLoop operates based on immutable rules and injected domain knowledge that it will never disobey:
 
 ### `SOUL.md` (Who it is)
 > "I am a forensic systems analyst... I treat 'we didn't know' as a catastrophic engineering failure, not an acceptable excuse."
+
+### `knowledge/security-patterns.md` (What it knows)
+The agent's memory bank is pre-injected with modern security patterns, optimizing the model to explicitly hunt for severe security flaws, supply-chain vulnerabilities, and hardcoded secrets with maximum efficiency and speed. 
 
 ### `RULES.md` (What it must do)
 | 🟢 Must Always | 🔴 Must Never |
