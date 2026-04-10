@@ -128,7 +128,7 @@ To execute its investigations autonomously, CausalLoop is equipped with 6 custom
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=C9O7d07MnFs">
-    <img src="https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg" alt="Watch the Demo" width="100%" />
+    <img src=""assets/newstuff.png" alt="Watch the Demo" width="100%" />
   </a>
   <br/>
   <em>Click above to watch the full hackathon demonstration (Replace link & ID)!</em>
