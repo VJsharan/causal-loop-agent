@@ -9,18 +9,26 @@
 <br/>
 
 <!-- BADGES -->
-<div align="center">
-<table>
-  <tr>
-    <td align="center"><a href="https://github.com/VJsharan/causal-loop-agent"><img src="https://img.shields.io/badge/Source-GitHub-181717?style=for-the-badge&logo=github&logoColor=white"/></a></td>
-    <td align="center"><a href="https://www.npmjs.com/package/@vjsharan/causal-loop-agent"><img src="https://img.shields.io/badge/Registry-NPM-CB3837?style=for-the-badge&logo=npm&logoColor=white"/></a></td>
-    <td align="center"><a href="https://docs.lyzr.ai/lyzr-adk/overview"><img src="https://img.shields.io/badge/Framework-Lyzr_ADK-4F46E5?style=for-the-badge&logo=react&logoColor=white"/></a></td>
-    <td align="center"><a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI_Engine-Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white"/></a></td>
-    <td align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge&logo=open-source-initiative&logoColor=white"/></a></td>
-    <td align="center"><a href="https://hackculture.in"><img src="https://img.shields.io/badge/GitAgent-Hackathon_2026-6366f1?style=for-the-badge&logo=git&logoColor=white"/></a></td>
-  </tr>
-</table>
-</div>
+<p align="center">
+  <a href="https://github.com/VJsharan/causal-loop-agent">
+    <img src="https://img.shields.io/badge/Source-GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+  </a>
+  <a href="https://www.npmjs.com/package/@vjsharan/causal-loop-agent">
+    <img src="https://img.shields.io/badge/Registry-NPM-CB3837?style=for-the-badge&logo=npm&logoColor=white" alt="NPM">
+  </a>
+  <a href="https://docs.lyzr.ai/lyzr-adk/overview">
+    <img src="https://img.shields.io/badge/Framework-Lyzr_ADK-4F46E5?style=for-the-badge&logo=lyzr&logoColor=white" alt="Lyzr ADK">
+  </a>
+  <a href="https://aistudio.google.com">
+    <img src="https://img.shields.io/badge/AI_Engine-Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini 2.5 Pro">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge&logo=open-source-initiative&logoColor=white" alt="MIT License">
+  </a>
+  <a href="https://hackculture.in">
+    <img src="https://img.shields.io/badge/GitAgent-Hackathon_2026-6366f1?style=for-the-badge&logo=git&logoColor=white" alt="GitAgent Hackathon">
+  </a>
+</p>
 
 <br/>
 
