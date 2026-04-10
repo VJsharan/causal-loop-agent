@@ -38,6 +38,8 @@
   <img src="assets/finalcoverimage.png" alt="CausalLoop Cover" width="100%" />
 </p>
 
+</div>
+
 ---
 
 ## 🗂️ Table of Contents
