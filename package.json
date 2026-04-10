@@ -60,7 +60,9 @@
   ],
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "dotenv": "^16.4.5"
+    "@shreyaskapale/gitagent": "^0.1.7",
+    "dotenv": "^16.4.5",
+    "gitclaw": "^1.3.3"
   },
   "gitagent": {
     "spec_version": "0.1.0",

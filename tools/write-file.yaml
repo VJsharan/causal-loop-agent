@@ -1,0 +1,21 @@
+name: write-file
+description: Writes content to a file on the local filesystem.
+input_schema:
+  type: object
+  properties:
+    filepath:
+      type: string
+      description: Path to the file to be written.
+    content:
+      type: string
+      description: The content to write to the file.
+  required:
+    - filepath
+    - content
+output_schema:
+  type: object
+  properties:
+    success:
+      type: boolean
+    message:
+      type: string

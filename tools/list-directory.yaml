@@ -1,0 +1,17 @@
+name: list-directory
+description: Lists the contents of a directory.
+input_schema:
+  type: object
+  properties:
+    directory:
+      type: string
+      description: Path to the directory to list.
+  required:
+    - directory
+output_schema:
+  type: object
+  properties:
+    entries:
+      type: array
+      items:
+        type: string

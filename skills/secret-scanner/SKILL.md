@@ -6,11 +6,7 @@ description: |
   Reports findings by severity — CRITICAL for active credentials,
   ELEVATED for suspicious patterns. Masks actual credential values in output.
   Never outputs the actual secret — only its location and classification.
-allowed-tools:
-  - read_file
-  - write_file
-  - list_directory
-  - run_grep_scan
+allowed-tools: read-file write-file list-directory run-grep-scan
 ---
 
 # Skill: secret-scanner

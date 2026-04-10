@@ -6,9 +6,7 @@ description: |
   Also checks for git hygiene issues: committed secrets files, node_modules,
   build artifacts, and merge conflict markers left in code.
   Fast, opinionated, and zero-tolerance for missing basics.
-allowed-tools:
-  - read_file
-  - list_directory
+allowed-tools: read-file list-directory
 ---
 
 # Skill: compliance-check

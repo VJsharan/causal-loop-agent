@@ -1,9 +1,7 @@
 ---
 name: mortem-interrogator
 description: Interrogates an incident report using the Five Whys framework to extract the uncomfortable systemic root cause. Rejects human error as an excuse.
-allowed-tools:
-  - read_file
-  - write_file
+allowed-tools: read-file write-file fetch-github-issues
 ---
 
 # Instructions
@@ -11,7 +9,7 @@ allowed-tools:
 You are executing the **mortem-interrogator** skill. A generic incident report will be provided to you. You must uncover the true, systemic root cause that management typically avoids acknowledging.
 
 1. **Information Gathering:**
-   - Use `read_file` to read the target incident markdown file (usually `incident.md`).
+   - Use `read-file` to read the target incident markdown file (usually `incident.md`).
 
 2. **The Interrogation (Five Whys):**
    - Internally execute a "Five Whys" analysis based on the incident text.

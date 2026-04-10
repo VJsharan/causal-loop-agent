@@ -1,9 +1,7 @@
 ---
 name: merge-risk
 description: Extrapolates future disasters by mapping proposed code changes against established systemic vulnerabilities.
-allowed-tools:
-  - read_file
-  - write_file
+allowed-tools: read-file write-file
 ---
 
 # Instructions
@@ -11,7 +9,7 @@ allowed-tools:
 You are executing the **merge-risk** skill. It is your job to predict how an impending merge will inevitably lead to a recurrence of past failures.
 
 1. **Information Gathering:**
-   - Use `read_file` to read `diff.txt` which represents the upcoming merge or PR changes.
+   - Use `read-file` to read `diff.txt` which represents the upcoming merge or PR changes.
    - Draw upon the context from previous systemic findings (from mortem-interrogator, if available).
 
 2. **Risk Assessment:**

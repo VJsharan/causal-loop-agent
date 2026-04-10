@@ -1,0 +1,26 @@
+name: fetch-github-issues
+description: |
+  Fetches the most recent open issues from a GitHub repository.
+  Requires a repository path (e.g., 'django/django').
+input_schema:
+  type: object
+  properties:
+    repo_path:
+      type: string
+      description: The 'owner/repo' string.
+  required:
+    - repo_path
+output_schema:
+  type: object
+  properties:
+    issues:
+      type: array
+      items:
+        type: object
+        properties:
+          title:
+            type: string
+          url:
+            type: string
+          description:
+            type: string

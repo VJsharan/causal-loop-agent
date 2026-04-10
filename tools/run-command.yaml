@@ -1,0 +1,19 @@
+name: run-command
+description: Executes a shell command and returns the output.
+input_schema:
+  type: object
+  properties:
+    command:
+      type: string
+      description: The shell command to execute.
+  required:
+    - command
+output_schema:
+  type: object
+  properties:
+    stdout:
+      type: string
+    stderr:
+      type: string
+    exit_code:
+      type: integer

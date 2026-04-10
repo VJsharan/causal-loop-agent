@@ -5,9 +5,7 @@ description: |
   Pipfile, pyproject.toml) for unpinned versions, missing lockfiles, and
   known vulnerable package patterns. Does not require internet access —
   flags structural risks that indicate a vulnerable dependency management posture.
-allowed-tools:
-  - read_file
-  - list_directory
+allowed-tools: read-file list-directory
 ---
 
 # Skill: dependency-audit
