@@ -127,7 +127,7 @@ To execute its investigations autonomously, CausalLoop is equipped with 6 custom
 ## 🎬 Live Demo
 
 <div align="center">
-  <a href="https://youtube.com/your-video-link-here">
+  <a href="https://www.youtube.com/watch?v=C9O7d07MnFs">
     <img src="https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg" alt="Watch the Demo" width="100%" />
   </a>
   <br/>
