@@ -172,36 +172,42 @@ Looks at newly proposed edits to ensure you don't repeat the errors found in the
 
 ## ⚡ Installation Guide
 
+### 📦 Install via npm
 CausalLoop is available as a global CLI tool on npm.
 
-### Quick Install
+#### Quick Install
 ```bash
 npm install -g @vjsharan/causal-loop-agent
 ```
-👉 [View on NPM Registry](https://www.npmjs.com/package/@vjsharan/causal-loop-agent)
 
-### Setup & Run
+#### Setup & Run
 ```bash
-# 1. Go to any project folder on your machine
+# 1. Get a free Gemini API key at https://aistudio.google.com
+
+# 2. Go to any git repo
 cd your-project
 
-# 2. Create a .env file containing your free Gemini API key
+# 3. Create a .env file with your key
 echo "GOOGLE_API_KEY=your_key_here" > .env
 
-# 3. Run the interactive investigator
+# 4. Run the investigator
 causalloop
 ```
-*No cloning needed. Install once, use in any repo.*
 
-### Option B: gitclaw Runtime Execution
-If you prefer to use the gitagent SDK standard execution:
+> [!TIP]
+> **No cloning needed.** Install once, use in any repository globally.
+
+---
+
+### 🛡️ Alternative: gitclaw Runtime
+If you are already integrated with the GitAgent ecosystem:
 ```bash
 npm install -g gitclaw
 gitclaw --dir . --model gemini-2.5-pro "scan this repository for hardcoded secrets"
 ```
 
-### Option C: Python Standalone Execution
-For pure Python inference (requires cloning the repo):
+### 🐍 Alternative: Python Backend
+For contributors or standalone forensic inference:
 ```bash
 git clone https://github.com/VJsharan/causal-loop-agent.git
 pip install -r requirements.txt
