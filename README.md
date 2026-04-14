@@ -351,15 +351,22 @@ causal-loop/
 
 <div align="center">
 
-| Name | Role |
-|:---:|:---|
-| [![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=plastic)](https://github.com/open-gitagent/gitagent) | Defines how the bot is supposed to act |
-| [![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=plastic)](https://docs.lyzr.ai/lyzr-adk/overview) | Orchestrates the steps and keeps it on track |
-| [![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=plastic&logo=google&logoColor=white)](https://aistudio.google.com) | The raw artificial intelligence smarts |
-| [![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=plastic)](https://github.com/open-gitagent/gitclaw) | Used to run it directly from terminal |
+### ⚙️ Built With
+
+[![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=flat-square)](https://github.com/open-gitagent/gitagent)
+→ defines agent behavior  
+
+[![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=flat-square)](https://docs.lyzr.ai/lyzr-adk/overview)
+→ orchestrates execution  
+
+[![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com)
+→ provides AI intelligence  
+
+[![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=flat-square)](https://github.com/open-gitagent/gitclaw)
+→ CLI execution layer  
 
 </div>
-
+  
 ---
 
 ## 👥 Contributing
