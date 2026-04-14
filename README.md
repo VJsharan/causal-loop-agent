@@ -348,20 +348,21 @@ causal-loop/
 ---
 
 ## 💻 Technology Stack
+
 <div align="center">
 
 ## ⚙️ Tech Stack
 
 <table>
 <tr>
-<td align="center" width="180">
+<td align="center">
 
 [![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=for-the-badge)](https://github.com/open-gitagent/gitagent)
 
-</td>
-<td align="left">
+<br/>
 
-Defines how the bot is supposed to act
+<sub><b>Agent Behavior</b></sub><br/>
+<sub>Defines how the bot is supposed to act</sub>
 
 </td>
 </tr>
@@ -371,10 +372,10 @@ Defines how the bot is supposed to act
 
 [![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge)](https://docs.lyzr.ai/lyzr-adk/overview)
 
-</td>
-<td align="left">
+<br/>
 
-Orchestrates the steps and keeps it on track
+<sub><b>Orchestration</b></sub><br/>
+<sub>Keeps the workflow structured and on track</sub>
 
 </td>
 </tr>
@@ -384,10 +385,10 @@ Orchestrates the steps and keeps it on track
 
 [![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
 
-</td>
-<td align="left">
+<br/>
 
-The raw artificial intelligence smarts
+<sub><b>AI Engine</b></sub><br/>
+<sub>The raw artificial intelligence smarts</sub>
 
 </td>
 </tr>
@@ -397,17 +398,17 @@ The raw artificial intelligence smarts
 
 [![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=for-the-badge)](https://github.com/open-gitagent/gitclaw)
 
-</td>
-<td align="left">
+<br/>
 
-Used to run it directly from terminal
+<sub><b>CLI Runtime</b></sub><br/>
+<sub>Run everything directly from terminal</sub>
 
 </td>
 </tr>
 
 </table>
 
-</div> 
+</div>
 ---
 
 ## 👥 Contributing
