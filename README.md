@@ -351,32 +351,41 @@ causal-loop/
 
 <div align="center">
 
-### 🧩 Core Components
+## ⚙️ Tech Stack
 
-**🤖 Agent Behavior**  
+<div style="border: 1px solid #30363d; border-radius: 12px; padding: 18px; max-width: 600px;">
+
+<div style="padding: 10px 0;">
+
 [![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=for-the-badge)](https://github.com/open-gitagent/gitagent)  
-<sub>Defines how the bot thinks and acts</sub>
-
----
-
-**🧠 Orchestration Layer**  
-[![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge)](https://docs.lyzr.ai/lyzr-adk/overview)  
-<sub>Keeps the workflow structured and on track</sub>
-
----
-
-**⚡ Intelligence Engine**  
-[![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)  
-<sub>Powers reasoning and responses</sub>
-
----
-
-**💻 CLI Interface**  
-[![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=for-the-badge)](https://github.com/open-gitagent/gitclaw)  
-<sub>Run everything straight from your terminal</sub>
+<sub>Defines how the bot is supposed to act</sub>
 
 </div>
-  
+
+<div style="padding: 10px 0; border-top: 1px solid #21262d;">
+
+[![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge)](https://docs.lyzr.ai/lyzr-adk/overview)  
+<sub>Orchestrates the steps and keeps it on track</sub>
+
+</div>
+
+<div style="padding: 10px 0; border-top: 1px solid #21262d;">
+
+[![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)  
+<sub>The raw artificial intelligence smarts</sub>
+
+</div>
+
+<div style="padding: 10px 0; border-top: 1px solid #21262d;">
+
+[![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=for-the-badge)](https://github.com/open-gitagent/gitclaw)  
+<sub>Used to run it directly from terminal</sub>
+
+</div>
+
+</div>
+
+</div>  
 ---
 
 ## 👥 Contributing
