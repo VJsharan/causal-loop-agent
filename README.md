@@ -351,80 +351,15 @@ causal-loop/
 
 <div align="center">
 
-## ⚙️ Tech Stack
-
-<table>
-<tr>
-<td align="center">
-
-[![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=for-the-badge)](https://github.com/open-gitagent/gitagent)
-
-<br/>
-
-<sub><b>Agent Behavior</b></sub><br/>
-<sub>Defines how the bot is supposed to act</sub>
-
-</td>
-</tr>
-
-<tr>
-<td align="center">
-
-[![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge)](https://docs.lyzr.ai/lyzr-adk/overview)
-
-<br/>
-
-<sub><b>Orchestration</b></sub><br/>
-<sub>Keeps the workflow structured and on track</sub>
-
-</td>
-</tr>
-
-<tr>
-<td align="center">
-
-[![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
-
-<br/>
-
-<sub><b>AI Engine</b></sub><br/>
-<sub>The raw artificial intelligence smarts</sub>
-
-</td>
-</tr>
-
-<tr>
-<td align="center">
-
-[![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=for-the-badge)](https://github.com/open-gitagent/gitclaw)
-
-<br/>
-
-<sub><b>CLI Runtime</b></sub><br/>
-<sub>Run everything directly from terminal</sub>
-
-</td>
-</tr>
-
-</table>
+| Name | Role |
+|:---:|:---|
+| [![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=plastic)](https://github.com/open-gitagent/gitagent) | Defines how the agent is supposed to act |
+| [![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=plastic)](https://docs.lyzr.ai/lyzr-adk/overview) | Orchestrates the steps and keeps it on track |
+| [![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=plastic&logo=google&logoColor=white)](https://aistudio.google.com) | The model acts as the crux / brain behind it |
+| [![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=plastic)](https://github.com/open-gitagent/gitclaw) | Used to run it directly from terminal |
 
 </div>
----
 
-## 👥 Contributing
-
-We love help! If you want to add code to this project, please make sure it aligns with the strict philosophy in the `SOUL.md` file. 
-Remember: **If a test breaks, we fix the test environment. We do not blame the contributor.**
-
----
-
-## ⚖️ License
-
-<div align="center">
-
-[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=plastic)](LICENSE)
-
-</div>
 
 ---
 
