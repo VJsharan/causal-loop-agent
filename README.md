@@ -348,44 +348,66 @@ causal-loop/
 ---
 
 ## 💻 Technology Stack
-
 <div align="center">
 
 ## ⚙️ Tech Stack
 
-<div style="border: 1px solid #30363d; border-radius: 12px; padding: 18px; max-width: 600px;">
+<table>
+<tr>
+<td align="center" width="180">
 
-<div style="padding: 10px 0;">
+[![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=for-the-badge)](https://github.com/open-gitagent/gitagent)
 
-[![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=for-the-badge)](https://github.com/open-gitagent/gitagent)  
-<sub>Defines how the bot is supposed to act</sub>
+</td>
+<td align="left">
 
-</div>
+Defines how the bot is supposed to act
 
-<div style="padding: 10px 0; border-top: 1px solid #21262d;">
+</td>
+</tr>
 
-[![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge)](https://docs.lyzr.ai/lyzr-adk/overview)  
-<sub>Orchestrates the steps and keeps it on track</sub>
+<tr>
+<td align="center">
 
-</div>
+[![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge)](https://docs.lyzr.ai/lyzr-adk/overview)
 
-<div style="padding: 10px 0; border-top: 1px solid #21262d;">
+</td>
+<td align="left">
 
-[![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)  
-<sub>The raw artificial intelligence smarts</sub>
+Orchestrates the steps and keeps it on track
 
-</div>
+</td>
+</tr>
 
-<div style="padding: 10px 0; border-top: 1px solid #21262d;">
+<tr>
+<td align="center">
 
-[![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=for-the-badge)](https://github.com/open-gitagent/gitclaw)  
-<sub>Used to run it directly from terminal</sub>
+[![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
 
-</div>
+</td>
+<td align="left">
 
-</div>
+The raw artificial intelligence smarts
 
-</div>  
+</td>
+</tr>
+
+<tr>
+<td align="center">
+
+[![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=for-the-badge)](https://github.com/open-gitagent/gitclaw)
+
+</td>
+<td align="left">
+
+Used to run it directly from terminal
+
+</td>
+</tr>
+
+</table>
+
+</div> 
 ---
 
 ## 👥 Contributing
