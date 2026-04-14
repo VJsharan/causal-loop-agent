@@ -351,19 +351,29 @@ causal-loop/
 
 <div align="center">
 
-### ⚙️ Built With
+### 🧩 Core Components
 
-[![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=flat-square)](https://github.com/open-gitagent/gitagent)
-→ defines agent behavior  
+**🤖 Agent Behavior**  
+[![gitagent](https://img.shields.io/badge/gitagent-534AB7?style=for-the-badge)](https://github.com/open-gitagent/gitagent)  
+<sub>Defines how the bot thinks and acts</sub>
 
-[![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=flat-square)](https://docs.lyzr.ai/lyzr-adk/overview)
-→ orchestrates execution  
+---
 
-[![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com)
-→ provides AI intelligence  
+**🧠 Orchestration Layer**  
+[![Lyzr](https://img.shields.io/badge/Lyzr_ADK-4F46E5?style=for-the-badge)](https://docs.lyzr.ai/lyzr-adk/overview)  
+<sub>Keeps the workflow structured and on track</sub>
 
-[![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=flat-square)](https://github.com/open-gitagent/gitclaw)
-→ CLI execution layer  
+---
+
+**⚡ Intelligence Engine**  
+[![Google](https://img.shields.io/badge/Gemini_2.5_Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)  
+<sub>Powers reasoning and responses</sub>
+
+---
+
+**💻 CLI Interface**  
+[![gitclaw](https://img.shields.io/badge/gitclaw-185FA5?style=for-the-badge)](https://github.com/open-gitagent/gitclaw)  
+<sub>Run everything straight from your terminal</sub>
 
 </div>
   
